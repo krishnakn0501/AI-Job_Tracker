@@ -1,0 +1,51 @@
+# .gitignore
+
+# Local environment
+.env.local
+.env.*.local
+
+# Generated resumes
+public/resumes/
+
+# Prisma
+prisma/migrations/
+
+# n8n local data
+n8n_data/
+
+# Next.js
+.next/
+.next/*
+.next
+.cache
+
+# Dependency directories
+node_modules/*
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+.early.coverage/*
+.early.coverage/
+.early.coverage
+
+.claude/*
+.claude/
+docs/*
+docs/
+e2e/*
+e2e/
+*.log
+.env
+.env.example
+CLAUDE.md
+sprints/
+test-results/
+Test docs/

@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  passwordHash  String
+  emailVerified Boolean       @default(false)
+  isAdmin       Boolean       @default(false)
+
+  // S8 — Settings fields
+  theme         String        @default("light")
+  username      String?
+  dob           DateTime?
+  country       String        @default("India")
+  mobile        String?
+  pendingEmail  String?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  applications  Application[]
+  otpCodes      OtpCode[]
+  resumeBases   ResumeBase[]
+  supportQueries SupportQuery[]
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  userId     String
+  code       String
+  purpose    String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+}
+
+model Application {
+  id                    String    @id @default(cuid())
+  userId                String
+  company               String
+  role                  String
+  jdText                String?
+  jdUrl                 String?
+  status                String    @default("Applied")
+  appliedDate           DateTime  @default(now())
+  followUpDate          DateTime?
+  interviewDate         DateTime?
+  generationStatus      String    @default("pending")
+  resumeMarkdown        String?
+  coverLetterMarkdown   String?
+  resumeReviewPath      String?
+  resumeFinalPath       String?
+  coverLetterReviewPath String?
+  coverLetterFinalPath  String?
+  roleTitleChanged      Boolean   @default(false)
+  roleTitleNote         String?
+  notes                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  resumeBaseId          String?   // S9 — which resume was used to generate this
+  resumeBase            ResumeBase? @relation(fields: [resumeBaseId], references: [id], onDelete: SetNull)
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, followUpDate])
+  @@index([userId, appliedDate])
+  @@index([resumeBaseId])
+}
+
+model ResumeBase {
+  id          String    @id @default(cuid())
+  userId      String
+  fileId      String
+  filename    String
+  label       String    // S9 — user-editable display name
+  isBase      Boolean   @default(false) // S9 — exactly one true per user
+  content     Json?
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  applications Application[]  // S9 — back-relation for "used in N applications"
+
+  @@index([userId])
+  @@index([userId, isBase])
+}
+
+// S8 — Support queries
+model SupportQuery {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category  String   // "Bug Report" | "Feature Request" | "General"
+  message   String   @db.Text
+  status    String   @default("open") // "open" | "resolved"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

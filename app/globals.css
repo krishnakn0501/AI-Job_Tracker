@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Base colors */
+  --background: #ffffff;
+  --foreground: #161616;
+
+  /* Popover / dropdown backgrounds (fixes visibility issue) */
+  --popover: #ffffff;
+  --popover-foreground: #161616;
+
+  /* Interactive elements */
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f4;
+  --secondary-foreground: #161616;
+
+  /* Muted states */
+  --muted: #f5f5f4;
+  --muted-foreground: #6c737b;
+
+  /* Accent states (hover/focus) */
+  --accent: #f5f5f4;
+  --accent-foreground: #161616;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Borders and inputs */
+  --border: #e5e6e7;
+  --input: #e5e6e7;
+  --ring: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --popover: #0a0a0a;
+    --popover-foreground: #ededed;
+    --primary: #ffffff;
+    --primary-foreground: #0a0a0a;
+    --secondary: #181818;
+    --secondary-foreground: #ededed;
+    --muted: #181818;
+    --muted-foreground: #a1a1aa;
+    --accent: #181818;
+    --accent-foreground: #ededed;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #ffffff;
+    --border: #262626;
+    --input: #262626;
+    --ring: #e5e5e5;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

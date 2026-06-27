@@ -1,0 +1,24 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+
+    environment:
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${DB_HOST}
+      - DB_POSTGRESDB_PORT=${DB_PORT}
+      - DB_POSTGRESDB_DATABASE=${DB_NAME}
+      - DB_POSTGRESDB_USER=${DB_USER}
+      - DB_POSTGRESDB_PASSWORD=${DB_PASSWORD}
+      - DB_POSTGRESDB_SSL_ENABLED=true
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - APP_URL=${APP_URL}
+      - ANTHROPIC_KEY=${ANTHROPIC_API_KEY}
+      - N8N_API_KEY=${N8N_API_KEY}
+      - USER_EMAIL=${USER_EMAIL}
+
+    ports:
+      - "5678:5678"
+
+    restart: unless-stopped
