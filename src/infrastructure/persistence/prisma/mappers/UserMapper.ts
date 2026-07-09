@@ -18,6 +18,11 @@ export class UserMapper {
       country: data.country,
       mobile: data.mobile ?? undefined,
       pendingEmail: data.pendingEmail ?? undefined,
+      // S10
+      reminderHour: data.reminderHour,
+      reminderAmPm: this.parseAmPm(data.reminderAmPm),
+      reminderOffsetDays: data.reminderOffsetDays,
+      reminderRepeat: data.reminderRepeat,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
     });
@@ -36,6 +41,11 @@ export class UserMapper {
       country: entity.country,
       mobile: entity.mobile ?? null,
       pendingEmail: entity.pendingEmail ?? null,
+      // S10
+      reminderHour: entity.reminderHour,
+      reminderAmPm: entity.reminderAmPm,
+      reminderOffsetDays: entity.reminderOffsetDays,
+      reminderRepeat: entity.reminderRepeat,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
@@ -46,5 +56,12 @@ export class UserMapper {
       return "light";
     }
     return theme;
+  }
+
+  private static parseAmPm(amPm: string): "AM" | "PM" {
+    if (amPm !== "AM" && amPm !== "PM") {
+      return "AM";
+    }
+    return amPm;
   }
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { ChevronLeft, Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, BriefcaseBusiness, Link as LinkIcon, FileText, CalendarClock, MessageSquareText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/shared/utils/cn";
+import { ReminderOverride, ReminderOverrideState } from "@/components/ReminderOverride";
+import type { ReminderPreference } from "@/lib/reminder-engine";
 
 function defaultFollowUpDate(): string {
   const d = new Date();
@@ -53,11 +55,25 @@ export default function AddJobForm() {
     jdText: false,
   });
 
-  // S9 — Resume selector state
+  // Resume selector state
   const [resumes, setResumes] = useState<ResumeOption[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
 
-  // Fetch resumes on mount
+  // Reminder override state
+  const [globalPref, setGlobalPref] = useState<ReminderPreference>({
+    hour: 9,
+    amPm: "AM",
+    offsetDays: 0,
+    repeat: false,
+  });
+  const [reminderOverride, setReminderOverride] = useState<ReminderOverrideState>({
+    enabled: false,
+    hour: null,
+    amPm: null,
+    offsetDays: null,
+    repeat: null,
+  });
+
   useEffect(() => {
     fetch("/api/resumes")
       .then((res) => res.json())
@@ -66,19 +82,29 @@ export default function AddJobForm() {
         const base = data.find((r: ResumeOption) => r.isBase);
         if (base) setSelectedResumeId(base.id);
       })
-      .catch(() => {
-        // Silently fail — form still works, just no resume selector
-      });
+      .catch(() => {});
   }, []);
 
-  // Check if follow-up date is in the past
+  useEffect(() => {
+    fetch("/api/user/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setGlobalPref({
+          hour: data.reminderHour ?? 9,
+          amPm: data.reminderAmPm ?? "AM",
+          offsetDays: data.reminderOffsetDays ?? 0,
+          repeat: data.reminderRepeat ?? false,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
   const checkFollowUpDate = (dateStr: string) => {
     if (!dateStr) {
       setFollowUpDateWarning(false);
       setFollowUpDateConfirmed(false);
       return;
     }
-
     const selectedDate = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -91,7 +117,6 @@ export default function AddJobForm() {
     }
   };
 
-  // Handle follow-up date change
   const handleFollowUpDateChange = (dateStr: string) => {
     setFollowUpDate(dateStr);
     checkFollowUpDate(dateStr);
@@ -108,7 +133,6 @@ export default function AddJobForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if we need to confirm past dates
     if (followUpDateWarning && !followUpDateConfirmed) {
       toast.error("Please confirm the past follow-up date or select a future date.");
       return;
@@ -137,6 +161,11 @@ export default function AddJobForm() {
           followUpDate,
           notes,
           resumeBaseId: selectedResumeId,
+          reminderOverrideEnabled: reminderOverride.enabled,
+          overrideReminderHour: reminderOverride.hour,
+          overrideReminderAmPm: reminderOverride.amPm,
+          overrideReminderOffsetDays: reminderOverride.offsetDays,
+          overrideReminderRepeat: reminderOverride.repeat,
         }),
       });
       if (!res.ok) {
@@ -155,170 +184,206 @@ export default function AddJobForm() {
   const noResumes = resumes.length === 0;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* S9 — Resume selector */}
-      <div>
-        <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-          Resume to use
-        </label>
-        {noResumes ? (
-          <p className="text-sm text-amber-600">
-            No resumes uploaded yet.{" "}
-            <Link href="/my-resumes" className="underline">
-              Upload one first
-            </Link>
-            .
-          </p>
-        ) : (
-          <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {resumes.map((r) => (
-                <SelectItem key={r.id} value={r.id}>
-                  {r.label} {r.isBase && "(base)"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      {/* Row 1: Company + Role */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-            Company *
-          </label>
-          <Input
-            placeholder="e.g. Google"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            onBlur={() => handleBlur("company")}
-            required
-            className={cn(showError("company") && "border-red-400")}
-          />
-          {showError("company") && (
-            <p className="text-xs text-red-500 mt-1">Company is required</p>
+    <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-6 items-start">
+      {/* Left Column: Job Details */}
+      <div className="flex-1 w-full flex flex-col gap-6">
+        {/* Resume Selection */}
+        <div className="bg-white/60 dark:bg-black/30 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-3xl p-6 shadow-sm transform-gpu">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+              <FileText className="h-4 w-4" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Base Resume</h2>
+          </div>
+          
+          {noResumes ? (
+            <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                No resumes uploaded yet.
+              </p>
+              <Button asChild variant="link" className="px-0 mt-1 h-auto text-amber-600 dark:text-amber-300">
+                <Link href="/my-resumes">Upload one first →</Link>
+              </Button>
+            </div>
+          ) : (
+            <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
+              <SelectTrigger className="w-full h-11 rounded-xl bg-white/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-sm transition-all focus:ring-indigo-500/50">
+                <SelectValue placeholder="Select a base resume" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+                {resumes.map((r) => (
+                  <SelectItem key={r.id} value={r.id} className="font-medium">
+                    {r.label} {r.isBase && <span className="text-slate-400 ml-1 font-normal">(Default Base)</span>}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-            Role *
-          </label>
-          <Input
-            placeholder="e.g. Software Engineer"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            onBlur={() => handleBlur("role")}
-            required
-            className={cn(showError("role") && "border-red-400")}
-          />
-          {showError("role") && (
-            <p className="text-xs text-red-500 mt-1">Role is required</p>
-          )}
-        </div>
-      </div>
 
-      {/* Job description */}
-      <div>
-        <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-          Job description *
-        </label>
-        <Textarea
-          placeholder="Paste the full job description here…"
-          className={cn(
-            "min-h-[220px] font-mono text-xs resize-y",
-            showError("jdText") && "border-red-400"
-          )}
-          value={jdText}
-          onChange={(e) => setJdText(e.target.value)}
-          onBlur={() => handleBlur("jdText")}
-          required
-        />
-        <p className="text-xs text-slate-400 mt-1">
-          The more complete the JD, the better Claude can tailor your resume.
-        </p>
-        {showError("jdText") && (
-          <p className="text-xs text-red-500 mt-1">Job description is required</p>
-        )}
-      </div>
+        {/* Job Details Card */}
+        <div className="bg-white/60 dark:bg-black/30 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-3xl p-6 shadow-sm transform-gpu">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+              <BriefcaseBusiness className="h-4 w-4" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Job Details</h2>
+          </div>
 
-      {/* Job URL */}
-      <div>
-        <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-          Job posting URL <span className="text-slate-400 font-normal">(optional)</span>
-        </label>
-        <Input
-          type="url"
-          placeholder="https://careers.company.com/..."
-          value={jdUrl}
-          onChange={(e) => setJdUrl(e.target.value)}
-        />
-      </div>
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Company *</label>
+                <Input
+                  placeholder="e.g. Google"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  onBlur={() => handleBlur("company")}
+                  className={cn(
+                    "h-11 rounded-xl bg-white/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-sm transition-all focus:bg-white dark:focus:bg-black/60",
+                    showError("company") && "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                  )}
+                />
+                {showError("company") && <p className="text-xs font-medium text-red-500">Required</p>}
+              </div>
 
-      {/* Row 2: Follow-up date + Notes */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-            Follow-up reminder <span className="text-slate-400 font-normal">(optional)</span>
-          </label>
-          <Input
-            type="date"
-            value={followUpDate}
-            onChange={(e) => handleFollowUpDateChange(e.target.value)}
-          />
-          {followUpDateWarning && (
-            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
-              <div className="flex items-start">
-                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-amber-700">
-                    This date is in the past — are you sure?
-                  </p>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0 text-amber-700 hover:text-amber-900 text-xs mt-1"
-                    onClick={() => setFollowUpDateConfirmed(true)}
-                  >
-                    Yes, confirm
-                  </Button>
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Role *</label>
+                <Input
+                  placeholder="e.g. Software Engineer"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  onBlur={() => handleBlur("role")}
+                  className={cn(
+                    "h-11 rounded-xl bg-white/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-sm transition-all focus:bg-white dark:focus:bg-black/60",
+                    showError("role") && "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                  )}
+                />
+                {showError("role") && <p className="text-xs font-medium text-red-500">Required</p>}
               </div>
             </div>
-          )}
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-            Private notes <span className="text-slate-400 font-normal">(optional)</span>
-          </label>
-          <Textarea
-            placeholder="Referral from…, recruiter name…"
-            className="min-h-[80px] resize-none"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Job Description *</label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Paste the full description. Claude uses this to highlight your most relevant skills.</p>
+              <Textarea
+                placeholder="Paste the requirements, responsibilities, and about the company..."
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                onBlur={() => handleBlur("jdText")}
+                className={cn(
+                  "min-h-[240px] rounded-xl bg-slate-50/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-inner font-mono text-sm leading-relaxed transition-all focus:bg-white dark:focus:bg-black/60 resize-y",
+                  showError("jdText") && "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                )}
+              />
+              {showError("jdText") && <p className="text-xs font-medium text-red-500">Required</p>}
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                Job Posting URL <span className="text-slate-400 font-normal text-xs">(optional)</span>
+              </label>
+              <div className="relative">
+                <LinkIcon className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                  type="url"
+                  placeholder="https://careers.company.com/..."
+                  value={jdUrl}
+                  onChange={(e) => setJdUrl(e.target.value)}
+                  className="pl-10 h-11 rounded-xl bg-white/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-sm transition-all focus:bg-white dark:focus:bg-black/60"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Submit */}
-      <Button
-        type="submit"
-        className="w-full h-12 text-sm font-medium"
-        disabled={loading || noResumes || !selectedResumeId}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Submitting…
-          </>
-        ) : (
-          "Generate tailored resume →"
-        )}
-      </Button>
+      {/* Right Column: Tracking & Reminders */}
+      <div className="w-full lg:w-[400px] flex flex-col gap-6 shrink-0">
+        <div className="bg-white/60 dark:bg-black/30 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-3xl p-6 shadow-sm transform-gpu sticky top-24">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+              <CalendarClock className="h-4 w-4" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Tracking</h2>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Follow-up Date
+              </label>
+              <Input
+                type="date"
+                value={followUpDate}
+                onChange={(e) => handleFollowUpDateChange(e.target.value)}
+                className="h-11 rounded-xl bg-white/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-sm font-medium"
+              />
+              {followUpDateWarning && (
+                <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                        This date is in the past — are you sure?
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 text-amber-600 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-transparent text-xs font-bold mt-1 underline"
+                        onClick={() => setFollowUpDateConfirmed(true)}
+                      >
+                        Yes, confirm
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Private Notes
+              </label>
+              <div className="relative">
+                <MessageSquareText className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Textarea
+                  placeholder="Referral from…, recruiter name…"
+                  className="min-h-[100px] pl-10 pt-3.5 rounded-xl bg-white/50 dark:bg-black/40 backdrop-blur-sm border-slate-200 dark:border-white/10 shadow-sm resize-none"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-200 dark:border-white/10">
+              <ReminderOverride
+                globalPref={globalPref}
+                override={reminderOverride}
+                onChange={(partial) => setReminderOverride((prev) => ({ ...prev, ...partial }))}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={loading || noResumes || !selectedResumeId}
+              className="w-full h-14 mt-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-base shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Generating Resume…
+                </>
+              ) : (
+                "Generate Tailored Resume →"
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
     </form>
   );
 }

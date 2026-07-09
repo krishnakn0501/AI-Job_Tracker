@@ -147,28 +147,33 @@ export default function VerifyOtpContent() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-800">
+    <main className="min-h-screen bg-slate-100 dark:bg-neutral-900 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute top-[15%] right-[-5%] w-[40%] h-[40%] rounded-full bg-slate-300/40 dark:bg-neutral-800/40 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[15%] left-[-5%] w-[40%] h-[40%] rounded-full bg-slate-200/40 dark:bg-neutral-700/40 blur-[120px] pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-500">
+        <div className="bg-white/70 dark:bg-black/40 backdrop-blur-xl rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] border border-white/40 dark:border-white/10 p-8 sm:p-10">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {purpose === "signup" ? "Verify your email" : "Reset your password"}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               Enter the 6-digit code sent to your email
             </p>
           </div>
 
           {error && (
-            <div className={`mb-4 p-3 rounded-md text-sm ${
-              success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            <div className={`mb-6 p-4 rounded-xl text-sm animate-in slide-in-from-top-2 backdrop-blur-md border ${
+              success 
+                ? "bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50" 
+                : "bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/50"
             }`}>
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex justify-center space-x-2">
+            <div className="flex justify-center gap-2 sm:gap-3">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -179,30 +184,38 @@ export default function VerifyOtpContent() {
                   value={digit}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-12 text-center text-xl border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white focus:bg-white dark:focus:bg-neutral-800 transition-all duration-300 shadow-sm"
                 />
               ))}
             </div>
 
-            <div className="text-center text-sm text-slate-500">
-              Time remaining: <span className="font-mono">{formatTime(countdown)}</span>
+            <div className="text-center text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Time remaining: <span className="font-mono text-slate-700 dark:text-slate-300">{formatTime(countdown)}</span>
             </div>
 
             <Button
               type="submit"
               disabled={isLoading || countdown <= 0}
-              className="w-full"
+              className="w-full h-11 rounded-xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
             >
-              {isLoading ? "Verifying..." : "Verify"}
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  Verifying...
+                </span>
+              ) : (
+                "Verify Code"
+              )}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <Button
               onClick={handleResend}
               disabled={resendDisabled || countdown <= 0}
               variant="link"
-              className="text-sm text-slate-500 hover:text-slate-700"
+              className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 disabled:opacity-50"
             >
               {resendDisabled
                 ? `Resend in ${formatTime(resendCountdown)}`
@@ -210,11 +223,11 @@ export default function VerifyOtpContent() {
             </Button>
           </div>
 
-          <div className="mt-6 text-center text-sm text-slate-500">
+          <div className="mt-4 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
             {purpose === "signup" ? (
               <>
                 Didn't receive an email?{" "}
-                <Link href="/signup" className="text-blue-600 hover:text-blue-800">
+                <Link href="/signup" className="text-slate-900 dark:text-white hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-4 transition-all">
                   Resend
                 </Link>
               </>
@@ -222,7 +235,7 @@ export default function VerifyOtpContent() {
               <>
                 <Link
                   href="/forgot-password"
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-slate-900 dark:text-white hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-4 transition-all"
                 >
                   Didn't receive an email?
                 </Link>

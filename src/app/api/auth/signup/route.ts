@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { container } from "@/infrastructure/container";
 import { Result } from "@/shared/types/Result";
+import { getPasswordPolicyError } from "@/domains/user/value-objects/Password";
 
 function handleResultError<T>(
   result: Result<T, Error>
@@ -27,11 +28,16 @@ export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
 
-    if (!email || !password || password.length < 8) {
+    if (!email || !password) {
       return Response.json(
-        { error: "Email and password (min 8 characters) are required" },
+        { error: "Email and password are required" },
         { status: 400 }
       );
+    }
+
+    const policyError = getPasswordPolicyError(password);
+    if (policyError) {
+      return Response.json({ error: policyError }, { status: 400 });
     }
 
     const result = await container.authUseCase.signUp(email, password);

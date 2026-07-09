@@ -24,6 +24,12 @@ export interface ApplicationDto {
   roleTitleNote?: string;
   notes?: string;
   resumeBaseId?: string;
+  // S10
+  reminderOverrideEnabled: boolean;
+  overrideReminderHour?: number;
+  overrideReminderAmPm?: string;
+  overrideReminderOffsetDays?: number;
+  overrideReminderRepeat?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,4 +45,10 @@ export interface CreateApplicationInput {
   interviewDate?: string;
   notes?: string;
   status?: ApplicationStatus;
+  // S10
+  reminderOverrideEnabled?: boolean;
+  overrideReminderHour?: number;
+  overrideReminderAmPm?: string;
+  overrideReminderOffsetDays?: number;
+  overrideReminderRepeat?: boolean;
 }

@@ -59,6 +59,12 @@ export class ApplicationUseCase {
           : undefined,
         notes: input.notes?.trim(),
         generationStatus: "pending",
+        // S10 — reminder overrides
+        reminderOverrideEnabled: input.reminderOverrideEnabled,
+        overrideReminderHour: input.overrideReminderHour,
+        overrideReminderAmPm: input.overrideReminderAmPm,
+        overrideReminderOffsetDays: input.overrideReminderOffsetDays,
+        overrideReminderRepeat: input.overrideReminderRepeat,
       });
 
       await this.repository.save(application);
@@ -93,6 +99,40 @@ export class ApplicationUseCase {
     } catch (error) {
       return Result.failure(error as Error);
     }
+  }
+
+  // S10 — Update per-application reminder override
+  async updateReminderOverride(
+    id: string,
+    userId: string,
+    override: {
+      reminderOverrideEnabled?: boolean;
+      overrideReminderHour?: number | null;
+      overrideReminderAmPm?: string | null;
+      overrideReminderOffsetDays?: number | null;
+      overrideReminderRepeat?: boolean | null;
+    }
+  ): Promise<Result<ApplicationDto>> {
+    const application = await this.repository.findById(id);
+
+    if (!application) {
+      return Result.failure(new NotFoundError("Application", id));
+    }
+
+    if (application.userId !== userId) {
+      return Result.failure(new Error("Forbidden"));
+    }
+
+    application.updateReminderOverride({
+      reminderOverrideEnabled: override.reminderOverrideEnabled,
+      overrideReminderHour: override.overrideReminderHour,
+      overrideReminderAmPm: override.overrideReminderAmPm,
+      overrideReminderOffsetDays: override.overrideReminderOffsetDays,
+      overrideReminderRepeat: override.overrideReminderRepeat,
+    });
+
+    await this.repository.save(application);
+    return Result.success(this.toDto(application));
   }
 
   async delete(id: string, userId: string): Promise<Result<void>> {
@@ -133,6 +173,12 @@ export class ApplicationUseCase {
       roleTitleNote: application.roleTitleNote,
       notes: application.notes,
       resumeBaseId: application.resumeBaseId,
+      // S10
+      reminderOverrideEnabled: application.reminderOverrideEnabled,
+      overrideReminderHour: application.overrideReminderHour,
+      overrideReminderAmPm: application.overrideReminderAmPm,
+      overrideReminderOffsetDays: application.overrideReminderOffsetDays,
+      overrideReminderRepeat: application.overrideReminderRepeat,
       createdAt: application.createdAt.toISOString(),
       updatedAt: application.updatedAt.toISOString(),
     };

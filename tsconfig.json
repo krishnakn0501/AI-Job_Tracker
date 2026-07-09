@@ -42,6 +42,9 @@
       ],
       "@/components/ui/*": [
         "./src/components/ui/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
       ]
     }
   },

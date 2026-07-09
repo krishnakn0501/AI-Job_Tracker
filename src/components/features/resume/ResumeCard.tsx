@@ -89,9 +89,9 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
 
   return (
     <>
-      <div className="bg-white border border-slate-200 rounded-lg p-4 mb-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
+      <div className="bg-white/60 dark:bg-black/30 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl p-5 mb-4 shadow-sm hover:shadow-md transition-shadow transform-gpu">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
             {editingLabel ? (
               <Input
                 value={labelDraft}
@@ -99,7 +99,7 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
                 onBlur={saveLabel}
                 onKeyDown={(e) => e.key === "Enter" && saveLabel()}
                 autoFocus
-                className="h-8 text-sm font-medium"
+                className="h-9 w-[200px] text-sm font-bold bg-white dark:bg-black/40 border-indigo-200 dark:border-indigo-500/30 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             ) : (
               <button
@@ -107,14 +107,14 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
                   setLabelDraft(resume.label);
                   setEditingLabel(true);
                 }}
-                className="text-sm font-medium text-slate-800 hover:underline"
+                className="text-base font-bold text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
               >
                 {resume.label}
               </button>
             )}
             {resume.isBase && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                Base resume
+              <span className="text-xs bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+                Default Base
               </span>
             )}
           </div>
@@ -124,48 +124,50 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
                 variant="outline"
                 size="sm"
                 onClick={handleSetBase}
-                className="h-7 text-xs"
+                className="h-8 text-xs font-semibold rounded-lg bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
               >
-                Set as base
+                Set as default
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setDeleteConfirm(true)}
-              className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+              className="h-8 text-xs font-semibold rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
             >
               Delete
             </Button>
           </div>
         </div>
-        <p className="text-xs text-slate-400 mb-2">
-          {resume.filename} &middot; uploaded {format(new Date(resume.createdAt), "MMM d, yyyy")}
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-4">
+          <span className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300 mr-2">{resume.filename}</span>
+          Uploaded {format(new Date(resume.createdAt), "MMM d, yyyy")}
         </p>
+        
         {resume.applications.length > 0 && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
+            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg transition-colors"
           >
             {expanded ? (
-              <ChevronUp className="h-3 w-3" />
+              <ChevronUp className="h-3.5 w-3.5" />
             ) : (
-              <ChevronDown className="h-3 w-3" />
+              <ChevronDown className="h-3.5 w-3.5" />
             )}
-            Used in {resume.applications.length} application
-            {resume.applications.length > 1 ? "s" : ""}
+            Used in {resume.applications.length} application{resume.applications.length > 1 ? "s" : ""}
           </button>
         )}
+        
         {expanded && (
-          <div className="mt-2 pl-4 border-l-2 border-slate-100 space-y-1.5">
+          <div className="mt-3 pl-2 space-y-2 relative before:absolute before:left-[3px] before:top-2 before:bottom-2 before:w-[2px] before:bg-indigo-100 dark:before:bg-indigo-500/20">
             {resume.applications.map((app) => (
               <Link
                 key={app.id}
                 href={`/application/${app.id}`}
-                className="flex items-center justify-between text-xs hover:bg-slate-50 px-2 py-1.5 rounded-md"
+                className="flex items-center justify-between text-xs hover:bg-white dark:hover:bg-slate-800/80 px-3 py-2 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all shadow-sm ml-3 group"
               >
-                <span className="text-slate-700">
-                  {app.company} &mdash; {app.role}
+                <span className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {app.company} &mdash; <span className="font-normal text-slate-500 dark:text-slate-400">{app.role}</span>
                 </span>
                 <StatusBadge status={app.status} />
               </Link>

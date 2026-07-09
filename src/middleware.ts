@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-otp"];
-const PUBLIC_API_PREFIXES = ["/api/auth/"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-otp", "/help"];
+const PUBLIC_API_PREFIXES = ["/api/auth/", "/api/cron/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (process.env.DISABLE_AUTH === "1") {
+    return NextResponse.next();
+  }
 
   if (PUBLIC_PATHS.includes(pathname) || PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("jobtrack_session")?.value;
+  const accessToken = request.cookies.get("jobtrack_access_token")?.value;
+  const refreshToken = request.cookies.get("jobtrack_refresh_token")?.value;
 
-  if (!token) {
+  if (!accessToken && !refreshToken) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -18,6 +18,11 @@ interface UserProps {
   country: string;
   mobile?: string;
   pendingEmail?: string;
+  // S10 — reminder preferences
+  reminderHour: number;
+  reminderAmPm: "AM" | "PM";
+  reminderOffsetDays: number;
+  reminderRepeat: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,12 +36,16 @@ export class User {
 
   /** Create a new user entity from registration data. */
   static create(
-    props: Omit<UserProps, "id" | "createdAt" | "updatedAt">
+    props: Omit<UserProps, "id" | "createdAt" | "updatedAt" | "reminderHour" | "reminderAmPm" | "reminderOffsetDays" | "reminderRepeat">
   ): User {
     const now = new Date();
     return new User({
       ...props,
       id: randomUUID(),
+      reminderHour: 9,
+      reminderAmPm: "AM",
+      reminderOffsetDays: 0,
+      reminderRepeat: false,
       createdAt: now,
       updatedAt: now,
     });
@@ -143,6 +152,28 @@ export class User {
     this.markAsUpdated();
   }
 
+  /** Update reminder preferences. */
+  updateReminderPreferences(preferences: {
+    reminderHour?: number;
+    reminderAmPm?: "AM" | "PM";
+    reminderOffsetDays?: number;
+    reminderRepeat?: boolean;
+  }): void {
+    if (preferences.reminderHour !== undefined) {
+      this.props.reminderHour = preferences.reminderHour;
+    }
+    if (preferences.reminderAmPm !== undefined) {
+      this.props.reminderAmPm = preferences.reminderAmPm;
+    }
+    if (preferences.reminderOffsetDays !== undefined) {
+      this.props.reminderOffsetDays = preferences.reminderOffsetDays;
+    }
+    if (preferences.reminderRepeat !== undefined) {
+      this.props.reminderRepeat = preferences.reminderRepeat;
+    }
+    this.markAsUpdated();
+  }
+
   /** Set admin flag. */
   setAdmin(isAdmin: boolean): void {
     this.props.isAdmin = isAdmin;
@@ -209,6 +240,23 @@ export class User {
 
   get pendingEmail(): string | undefined {
     return this.props.pendingEmail;
+  }
+
+  // S10 — Reminder preference accessors
+  get reminderHour(): number {
+    return this.props.reminderHour;
+  }
+
+  get reminderAmPm(): "AM" | "PM" {
+    return this.props.reminderAmPm;
+  }
+
+  get reminderOffsetDays(): number {
+    return this.props.reminderOffsetDays;
+  }
+
+  get reminderRepeat(): boolean {
+    return this.props.reminderRepeat;
   }
 
   get createdAt(): Date {

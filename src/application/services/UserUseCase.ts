@@ -44,6 +44,21 @@ export class UserUseCase {
       user.setTheme(input.theme);
     }
 
+    // S10 — reminder preferences
+    if (
+      input.reminderHour !== undefined ||
+      input.reminderAmPm !== undefined ||
+      input.reminderOffsetDays !== undefined ||
+      input.reminderRepeat !== undefined
+    ) {
+      user.updateReminderPreferences({
+        reminderHour: input.reminderHour,
+        reminderAmPm: input.reminderAmPm,
+        reminderOffsetDays: input.reminderOffsetDays,
+        reminderRepeat: input.reminderRepeat,
+      });
+    }
+
     await this.repository.update(user);
     return Result.success(this.toDto(user));
   }
@@ -83,6 +98,11 @@ export class UserUseCase {
     country: string;
     mobile?: string;
     pendingEmail?: string;
+    // S10
+    reminderHour: number;
+    reminderAmPm: "AM" | "PM";
+    reminderOffsetDays: number;
+    reminderRepeat: boolean;
     createdAt: Date;
     updatedAt: Date;
   }): UserDto {
@@ -97,6 +117,11 @@ export class UserUseCase {
       country: user.country,
       mobile: user.mobile,
       pendingEmail: user.pendingEmail,
+      // S10
+      reminderHour: user.reminderHour,
+      reminderAmPm: user.reminderAmPm,
+      reminderOffsetDays: user.reminderOffsetDays,
+      reminderRepeat: user.reminderRepeat,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };

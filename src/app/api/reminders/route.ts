@@ -27,7 +27,7 @@ function handleResultError<T>(
 export async function GET(request: Request) {
   try {
     const userId = await getUserId();
-    const result = await container.reminderUseCase.getRemindersForUser(userId);
+    const result = await container.reminderUseCase.getUncheckedRemindersForUser(userId);
 
     const error = handleResultError(result);
     if (error) {
