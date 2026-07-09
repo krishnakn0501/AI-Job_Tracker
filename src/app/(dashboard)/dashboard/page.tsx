@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Briefcase } from "lucide-react";
+import { Briefcase, LayoutGrid, List } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Application } from "@prisma/client";
 
@@ -14,28 +14,26 @@ import KanbanBoard from "@/components/features/application/KanbanBoard";
 
 function TableSkeleton() {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-      {/* Fake header row */}
-      <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex gap-4">
-        {["w-1/3", "w-20", "w-20", "w-20", "w-24"].map((w, i) => (
-          <Skeleton key={i} className={`h-3.5 ${w} rounded`} />
+    <div className="bg-white/40 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-white/60 dark:bg-black/40 px-6 py-4 border-b border-slate-200 dark:border-white/10 flex gap-4">
+        {["w-1/3", "w-24", "w-24", "w-24", "w-24"].map((w, i) => (
+          <Skeleton key={i} className={`h-4 ${w} rounded-md dark:bg-white/5`} />
         ))}
       </div>
-      {/* Fake rows */}
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-4"
+          className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-4"
         >
           <div className="flex-1">
-            <Skeleton className="h-3.5 w-36 mb-1.5 rounded" />
-            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-4 w-40 mb-2 rounded-md dark:bg-white/5" />
+            <Skeleton className="h-3 w-28 rounded-md dark:bg-white/5" />
           </div>
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-3.5 w-12 rounded" />
-          <Skeleton className="h-3.5 w-16 rounded" />
-          <Skeleton className="h-7 w-20 rounded-md" />
-          <Skeleton className="h-7 w-7 rounded-md" />
+          <Skeleton className="h-7 w-24 rounded-full dark:bg-white/5" />
+          <Skeleton className="h-4 w-16 rounded-md dark:bg-white/5" />
+          <Skeleton className="h-4 w-20 rounded-md dark:bg-white/5" />
+          <Skeleton className="h-8 w-24 rounded-md dark:bg-white/5" />
+          <Skeleton className="h-8 w-8 rounded-full dark:bg-white/5" />
         </div>
       ))}
     </div>
@@ -44,15 +42,15 @@ function TableSkeleton() {
 
 function StatsSkeleton() {
   return (
-    <div className="grid grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-slate-50 rounded-lg p-4 border border-slate-100"
+          className="bg-white/60 dark:bg-black/30 backdrop-blur-xl rounded-2xl p-5 border border-white/40 dark:border-white/10"
         >
-          <Skeleton className="h-3 w-20 mb-2 rounded" />
-          <Skeleton className="h-7 w-12 mb-1 rounded" />
-          <Skeleton className="h-3 w-16 rounded" />
+          <Skeleton className="h-3 w-24 mb-3 rounded-md dark:bg-white/5" />
+          <Skeleton className="h-8 w-16 mb-2 rounded-md dark:bg-white/5" />
+          <Skeleton className="h-3 w-20 rounded-md dark:bg-white/5" />
         </div>
       ))}
     </div>
@@ -62,23 +60,31 @@ function StatsSkeleton() {
 export default function DashboardPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban"); // Default to kanban
+  const [greeting, setGreeting] = useState("");
 
-  /* ---- Persist view mode in localStorage ---- */
-  useEffect(() => {
-    const saved = localStorage.getItem("jobtrack-view");
-    if (saved === "kanban" || saved === "table") setViewMode(saved);
-  }, []);
-
-  /* ---- Set page title ---- */
+  /* ---- Initial Setup ---- */
   useEffect(() => {
     document.title = "JobTrack — Dashboard";
+    
+    // Set greeting based on time of day
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good morning");
+    else if (hour < 18) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
+
+    // Persist view mode (always default to kanban unless explicitly set to table)
+    const saved = localStorage.getItem("jobtrack-view");
+    if (saved === "table") {
+      setViewMode("table");
+    } else {
+      setViewMode("kanban"); // Enforce Kanban default
+    }
   }, []);
 
-  const toggleView = () => {
-    const next = viewMode === "table" ? "kanban" : "table";
-    setViewMode(next);
-    localStorage.setItem("jobtrack-view", next);
+  const handleViewChange = (mode: "kanban" | "table") => {
+    setViewMode(mode);
+    localStorage.setItem("jobtrack-view", mode);
   };
 
   /* ---- Fetch applications ---- */
@@ -103,7 +109,6 @@ export default function DashboardPage() {
 
   /* ---- Optimistic status change ---- */
   const handleStatusChange = async (id: string, status: string) => {
-    // Optimistic update
     setApplications((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status } : a))
     );
@@ -121,17 +126,44 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-slate-800 dark:text-white">Dashboard Overview</h1>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleView}
-          className="h-9 px-4 rounded-xl border-slate-200 dark:border-neutral-700 bg-white/50 dark:bg-neutral-800/50 hover:bg-white dark:hover:bg-neutral-800 text-slate-700 dark:text-slate-300 font-medium shadow-sm transition-all"
-        >
-          {viewMode === "table" ? "⊞ Kanban View" : "☰ Table View"}
-        </Button>
+    <div className="flex flex-col h-full w-full max-w-7xl mx-auto">
+      {/* Premium Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            {greeting}
+            <span className="text-xl">👋</span>
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+            Here&apos;s an overview of your job applications.
+          </p>
+        </div>
+
+        {/* Segmented Control for View Toggle */}
+        <div className="inline-flex bg-slate-200/50 dark:bg-black/40 backdrop-blur-md p-1 rounded-xl border border-slate-300/50 dark:border-white/10 shadow-inner">
+          <button
+            onClick={() => handleViewChange("kanban")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+              viewMode === "kanban"
+                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-white/10"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-white/5"
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Kanban
+          </button>
+          <button
+            onClick={() => handleViewChange("table")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+              viewMode === "table"
+                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-white/10"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-white/5"
+            }`}
+          >
+            <List className="h-4 w-4" />
+            Table
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -140,25 +172,27 @@ export default function DashboardPage() {
           <TableSkeleton />
         </>
       ) : applications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Briefcase className="h-12 w-12 text-slate-200 mb-4" />
-          <h2 className="text-lg font-medium text-slate-700 mb-1">
+        <div className="flex flex-col items-center justify-center py-32 text-center bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-3xl shadow-sm">
+          <div className="h-16 w-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <Briefcase className="h-8 w-8" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2 tracking-tight">
             No applications yet
           </h2>
-          <p className="text-sm text-slate-400 mb-6">
-            Start by uploading your resume, then add your first job.
+          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md">
+            Your pipeline is empty! Start by uploading your base resume, then add your first job application so Claude can tailor it.
           </p>
-          <div className="flex gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/my-resumes">Upload resume</Link>
+          <div className="flex gap-4">
+            <Button variant="outline" asChild className="h-11 px-6 rounded-xl border-slate-300 dark:border-white/20 bg-white/50 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold shadow-sm hover:bg-slate-100 dark:hover:bg-white/10">
+              <Link href="/my-resumes">Upload Resume</Link>
             </Button>
-            <Button asChild>
-              <Link href="/add">Add first job</Link>
+            <Button asChild className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm">
+              <Link href="/add">Add Application</Link>
             </Button>
           </div>
         </div>
       ) : (
-        <>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <StatsBar applications={applications} />
           {viewMode === "table" ? (
             <ApplicationTable
@@ -171,7 +205,7 @@ export default function DashboardPage() {
               onStatusChange={handleStatusChange}
             />
           )}
-        </>
+        </div>
       )}
     </div>
   );

@@ -14,9 +14,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("jobtrack_session")?.value;
+  const accessToken = request.cookies.get("jobtrack_access_token")?.value;
+  const refreshToken = request.cookies.get("jobtrack_refresh_token")?.value;
 
-  if (!token) {
+  if (!accessToken && !refreshToken) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

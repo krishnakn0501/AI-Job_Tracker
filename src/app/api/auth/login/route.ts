@@ -25,7 +25,7 @@ function handleResultError<T>(
 
 /**
  * POST /api/auth/login
- * - Authenticate user and set session cookie.
+ * - Authenticate user and set session cookies.
  */
 export async function POST(request: Request) {
   try {
@@ -44,17 +44,27 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unexpected error" }, { status: 500 });
     }
 
-    cookies().set("jobtrack_session", result.value.token, {
+    const { accessToken, refreshToken, isAdmin } = result.value;
+
+    cookies().set("jobtrack_access_token", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 60 * 60, // 1 hour
+      path: "/",
+    });
+
+    cookies().set("jobtrack_refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
     });
 
     return Response.json({
       success: true,
-      isAdmin: result.value.isAdmin,
+      isAdmin,
     });
   } catch (error) {
     console.error("[api/auth/login] Error:", error);

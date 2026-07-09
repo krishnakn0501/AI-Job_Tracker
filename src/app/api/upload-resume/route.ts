@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { getUserId } from "@/shared/middleware/getUserId";
-import { uploadResumeFile } from "@/infrastructure/external-api/AnthropicClient";
+import { uploadResumeFileS3 } from "@/infrastructure/external-api/S3Client";
 import { container } from "@/infrastructure/container";
 import { Result } from "@/shared/types/Result";
 
@@ -51,11 +51,12 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { fileId } = await uploadResumeFile(buffer, file.name, file.type);
+    // Upload to Supabase S3 instead of Anthropic
+    const { fileUrl, fileId } = await uploadResumeFileS3(buffer, file.name, file.type, userId);
 
     const result = await container.resumeUseCase.create(
       {
-        fileId,
+        fileId: fileUrl, // Save the Supabase public URL in fileId so n8n can easily download it
         filename: file.name,
         label: resumeLabel,
       },

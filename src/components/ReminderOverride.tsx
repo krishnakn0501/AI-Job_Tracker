@@ -2,12 +2,12 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import {
   ReminderPreference,
   getEffectivePreference,
   summarizePreference,
 } from "@/lib/reminder-engine";
+import { BellRing } from "lucide-react";
 
 export type ReminderOverrideState = {
   enabled: boolean;
@@ -41,38 +41,40 @@ export function ReminderOverride({ globalPref, override, onChange }: Props) {
   };
 
   return (
-    <div className="border border-slate-200 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-sm font-medium text-slate-700">Custom reminder</p>
-          <p className="text-xs text-slate-400">
-            Override your default reminder settings for this application
-          </p>
+    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white/40 dark:bg-black/20 p-5 shadow-sm transition-all">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <BellRing className="h-4 w-4 text-indigo-500" />
+          <p className="text-sm font-bold text-slate-800 dark:text-white">Custom Reminder</p>
         </div>
         <Switch
           checked={override.enabled}
           onCheckedChange={handleToggle}
+          className="data-[state=checked]:bg-indigo-500"
         />
       </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+        Override the default reminder time for this application.
+      </p>
 
       {override.enabled && (
-        <div className="space-y-3 mt-3 pt-3 border-t border-slate-100">
+        <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-white/10">
           {/* Hour */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1.5">
-                Reminder time
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1.5">
+                Time
               </label>
               <Select
                 value={override.hour !== null ? String(override.hour) : String(globalPref.hour)}
                 onValueChange={(v) => onChange({ hour: Number(v) })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl bg-white/50 dark:bg-black/40 border-slate-200 dark:border-white/10 shadow-sm focus:ring-indigo-500/50">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
-                    <SelectItem key={h} value={String(h)}>
+                    <SelectItem key={h} value={String(h)} className="font-medium">
                       {h}:00
                     </SelectItem>
                   ))}
@@ -80,19 +82,19 @@ export function ReminderOverride({ globalPref, override, onChange }: Props) {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1.5">
-                &nbsp;
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1.5">
+                AM/PM
               </label>
               <Select
                 value={override.amPm ?? globalPref.amPm}
                 onValueChange={(v) => onChange({ amPm: v })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl bg-white/50 dark:bg-black/40 border-slate-200 dark:border-white/10 shadow-sm focus:ring-indigo-500/50">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="AM">AM</SelectItem>
-                  <SelectItem value="PM">PM</SelectItem>
+                <SelectContent className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+                  <SelectItem value="AM" className="font-medium">AM</SelectItem>
+                  <SelectItem value="PM" className="font-medium">PM</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -100,7 +102,7 @@ export function ReminderOverride({ globalPref, override, onChange }: Props) {
 
           {/* Offset */}
           <div>
-            <label className="text-xs font-medium text-slate-500 block mb-1.5">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1.5">
               Remind me
             </label>
             <Select
@@ -111,30 +113,31 @@ export function ReminderOverride({ globalPref, override, onChange }: Props) {
               }
               onValueChange={(v) => onChange({ offsetDays: Number(v) })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 rounded-xl bg-white/50 dark:bg-black/40 border-slate-200 dark:border-white/10 shadow-sm focus:ring-indigo-500/50">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">On the day</SelectItem>
-                <SelectItem value="1">1 day before</SelectItem>
-                <SelectItem value="2">2 days before</SelectItem>
-                <SelectItem value="3">3 days before</SelectItem>
-                <SelectItem value="7">1 week before</SelectItem>
+              <SelectContent className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+                <SelectItem value="0" className="font-medium">On the day</SelectItem>
+                <SelectItem value="1" className="font-medium">1 day before</SelectItem>
+                <SelectItem value="2" className="font-medium">2 days before</SelectItem>
+                <SelectItem value="3" className="font-medium">3 days before</SelectItem>
+                <SelectItem value="7" className="font-medium">1 week before</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Repeat */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2">
             <div>
-              <p className="text-sm text-slate-700">Repeat daily</p>
-              <p className="text-xs text-slate-400">
-                Fire every day starting from the offset until the follow-up date
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Repeat daily</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Until follow-up date
               </p>
             </div>
             <Switch
               checked={override.repeat ?? globalPref.repeat}
               onCheckedChange={(checked) => onChange({ repeat: checked })}
+              className="data-[state=checked]:bg-indigo-500"
             />
           </div>
 
@@ -147,15 +150,15 @@ export function ReminderOverride({ globalPref, override, onChange }: Props) {
                 repeat: null,
               })
             }
-            className="text-xs text-slate-400 underline hover:text-slate-600"
+            className="text-xs text-indigo-500 dark:text-indigo-400 font-medium hover:underline pt-2 inline-block"
             type="button"
           >
-            Reset to global defaults
+            Reset to defaults
           </button>
         </div>
       )}
 
-      <div className="mt-3 bg-slate-50 rounded-md px-3 py-2 text-xs text-slate-600">
+      <div className="mt-4 bg-indigo-50/50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-3 text-xs font-medium text-indigo-700 dark:text-indigo-300">
         {summarizePreference(effective)}
       </div>
     </div>

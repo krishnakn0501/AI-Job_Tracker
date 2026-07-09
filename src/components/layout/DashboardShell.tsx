@@ -95,13 +95,13 @@ export default function DashboardShell({ children }: Props) {
 
   return (
     <div className="flex h-screen bg-slate-100 dark:bg-neutral-900 relative overflow-hidden text-slate-900 dark:text-slate-100">
-      {/* Abstract Background Elements for Glassmorphism */}
-      <div className="absolute top-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-slate-300/30 dark:bg-neutral-800/40 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[10%] w-[40%] h-[40%] rounded-full bg-slate-200/30 dark:bg-neutral-700/30 blur-[120px] pointer-events-none" />
+      {/* Abstract Background Elements for Glassmorphism (Hardware accelerated) */}
+      <div className="absolute top-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-slate-300/30 dark:bg-neutral-800/40 blur-[100px] pointer-events-none transform-gpu will-change-transform" />
+      <div className="absolute bottom-[-10%] right-[10%] w-[40%] h-[40%] rounded-full bg-slate-200/30 dark:bg-neutral-700/30 blur-[100px] pointer-events-none transform-gpu will-change-transform" />
 
       {/* ---- Left Sidebar ---- */}
       <aside 
-        className={`flex-shrink-0 bg-white/60 dark:bg-black/30 backdrop-blur-xl border-r border-white/40 dark:border-white/10 flex flex-col transition-all duration-300 z-20 ${
+        className={`flex-shrink-0 bg-white/60 dark:bg-black/30 backdrop-blur-xl border-r border-white/40 dark:border-white/10 flex flex-col transition-all duration-300 ease-in-out z-20 transform-gpu ${
           isSidebarCollapsed ? "w-[80px]" : "w-[240px]"
         }`}
       >
@@ -175,7 +175,7 @@ export default function DashboardShell({ children }: Props) {
       {/* ---- Main Area ---- */}
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         {/* Top bar */}
-        <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md border-b border-white/40 dark:border-white/10 px-8 h-16 flex items-center justify-between flex-shrink-0 shadow-sm">
+        <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md border-b border-white/40 dark:border-white/10 px-8 h-16 flex items-center justify-between flex-shrink-0 shadow-sm transform-gpu">
           <div className="flex items-center gap-4">
             {showBack && (
               <Button 

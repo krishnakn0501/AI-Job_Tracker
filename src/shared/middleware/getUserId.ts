@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { verifyJwt } from "@/infrastructure/auth/JwtService";
+import { verifyAccessToken } from "@/infrastructure/auth/JwtService";
 
 /**
  * Extract userId from the session cookie by verifying the JWT.
@@ -15,16 +15,16 @@ export async function getUserId(): Promise<string> {
     return process.env.TEST_USER_ID ?? "default-test-user";
   }
 
-  const sessionCookie = cookies().get("jobtrack_session")?.value;
+  const sessionCookie = cookies().get("jobtrack_access_token")?.value;
 
   if (!sessionCookie) {
-    throw new Error("Missing user context — no session cookie found");
+    throw new Error("Missing user context — no access token found");
   }
 
-  const payload = await verifyJwt(sessionCookie);
+  const payload = await verifyAccessToken(sessionCookie);
 
   if (!payload) {
-    throw new Error("Invalid session — could not verify JWT");
+    throw new Error("Invalid session — could not verify access token");
   }
 
   return payload.userId;

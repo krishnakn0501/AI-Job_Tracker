@@ -11,7 +11,7 @@ import { ForbiddenError } from "@/shared/errors/ForbiddenError";
 import { prisma } from "@/infrastructure/persistence/prisma/PrismaClient";
 
 import { hashPassword, verifyPassword } from "@/infrastructure/auth/PasswordService";
-import { signJwt } from "@/infrastructure/auth/JwtService";
+import { signAccessToken, signRefreshToken } from "@/infrastructure/auth/JwtService";
 import {
   generateOtp as generateOtpCode,
   OTP_EXPIRY_MS,
@@ -21,7 +21,8 @@ import {
 import { sendOtpEmail } from "@/infrastructure/email/MailerService";
 
 interface AuthToken {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   isAdmin: boolean;
 }
 
@@ -118,8 +119,11 @@ export class AuthUseCase {
       return Result.failure(new UnauthorizedError("Invalid email or password"));
     }
 
-    const token = await signJwt({ userId: user.id, email: user.emailValue });
-    return Result.success({ token, isAdmin: user.isAdmin });
+    const payload = { userId: user.id, email: user.emailValue };
+    const accessToken = await signAccessToken(payload);
+    const refreshToken = await signRefreshToken(payload);
+
+    return Result.success({ accessToken, refreshToken, isAdmin: user.isAdmin });
   }
 
   // ===== Password Reset =====
