@@ -74,17 +74,17 @@ export default function StatsBar({ applications }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="bg-slate-50 rounded-lg p-4 border border-slate-100"
+          className="bg-white/60 dark:bg-black/30 backdrop-blur-xl rounded-2xl p-5 border border-white/40 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.03)] hover:shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 animate-in fade-in zoom-in"
         >
-          <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
             {card.label}
           </p>
-          <p className="text-2xl font-semibold text-slate-800">{card.value}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{card.sub}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{card.value}</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">{card.sub}</p>
         </div>
       ))}
     </div>

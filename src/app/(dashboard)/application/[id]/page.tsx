@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronUp, ChevronDown, FileText, AlertTriangle } from "lucide-react";
+import { ChevronUp, ChevronDown, FileText, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Application } from "@/shared/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import DashboardShell from "@/components/layout/DashboardShell";
 import StatusControl from "@/components/StatusControl";
 import ResumeViewer from "@/components/ResumeViewer";
 import { ReminderOverride, ReminderOverrideState } from "@/components/ReminderOverride";
@@ -58,7 +57,6 @@ export default function ApplicationDetailPage({
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-    router.push("/dashboard");
   };
 
   // Check if date is in the past
@@ -282,27 +280,16 @@ export default function ApplicationDetailPage({
 
   if (loading || !app) {
     return (
-      <DashboardShell>
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        </div>
-      </DashboardShell>
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
   return (
-    <DashboardShell>
-      <div className="flex gap-0 h-full">
-        {/* Left column */}
-        <div className="w-3/5 pr-8 py-6 overflow-y-auto">
-          <button
-            onClick={handleNavigateBack}
-            className="flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 mb-6 transition-colors"
-            type="button"
-            aria-label="All applications"
-          >
-            <ChevronLeft className="h-4 w-4" /> All applications
-          </button>
+    <div className="flex gap-0 h-full">
+      {/* Left column */}
+      <div className="w-3/5 pr-8 py-6 overflow-y-auto">
 
           <h1 className="text-2xl font-semibold text-slate-800">
             {app.company}
@@ -477,6 +464,5 @@ export default function ApplicationDetailPage({
           </div>
         </div>
       </div>
-    </DashboardShell>
   );
 }

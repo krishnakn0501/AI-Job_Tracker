@@ -21,13 +21,13 @@ function handleResultError<T>(
 }
 
 /**
- * GET /api/reminders
- * - Returns applications where follow-up is due today OR interview is tomorrow.
+ * GET /api/reminders/history
+ * - Returns all reminders (past, present, future) regardless of completion status.
  */
 export async function GET(request: Request) {
   try {
     const userId = await getUserId();
-    const result = await container.reminderUseCase.getUncheckedRemindersForUser(userId);
+    const result = await container.reminderUseCase.getAllRemindersForUser(userId);
 
     const error = handleResultError(result);
     if (error) {
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
     return Response.json(result.value);
   } catch (error) {
-    console.error("[api/reminders GET] Error:", error);
+    console.error("[api/reminders/history GET] Error:", error);
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -53,8 +53,8 @@ function DraggableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white rounded-md border border-slate-200 p-3 mb-2 cursor-pointer hover:border-slate-300 hover:shadow-sm ${
-        isFollowUpToday ? "border-l-2 border-l-red-400" : ""
+      className={`bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md rounded-xl border border-white/40 dark:border-white/10 p-4 mb-3 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all active:scale-[0.98] ${
+        isFollowUpToday ? "border-l-4 border-l-red-500" : ""
       }`}
       {...attributes}
       {...listeners}
@@ -66,14 +66,16 @@ function DraggableCard({
         wasDragging.current = true;
       }}
     >
-      <p className="text-sm font-medium text-slate-800">{app.company}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{app.role}</p>
-      <p className="text-xs text-slate-400 mt-2">
-        {format(new Date(app.appliedDate), "MMM d")}
-      </p>
-      {isFollowUpToday && (
-        <span className="text-xs text-red-500 mt-1 block">Follow-up today</span>
-      )}
+      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{app.company}</p>
+      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 truncate">{app.role}</p>
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-neutral-700/50">
+        <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
+          {format(new Date(app.appliedDate), "MMM d")}
+        </p>
+        {isFollowUpToday && (
+          <span className="text-[10px] uppercase tracking-wider font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">Follow-up</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -94,16 +96,16 @@ function DroppableColumn({
   const { setNodeRef } = useDroppable({ id: status });
 
   return (
-    <div className="bg-slate-100 rounded-lg p-3 min-w-[200px] flex-1">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+    <div className="bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl p-4 min-w-[280px] flex-1 flex flex-col shadow-[0_8px_32px_0_rgba(0,0,0,0.02)]">
+      <div className="flex items-center justify-between mb-4 px-1">
+        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">
           {status}
         </span>
-        <span className="text-xs bg-white text-slate-400 rounded-full px-2 py-0.5 border border-slate-200">
+        <span className="text-xs font-medium bg-white/60 dark:bg-neutral-800/60 text-slate-600 dark:text-slate-300 rounded-full px-2.5 py-1 border border-white/40 dark:border-white/10 shadow-sm">
           {apps.length}
         </span>
       </div>
-      <div ref={setNodeRef} className="flex-1 min-h-[60px]">
+      <div ref={setNodeRef} className="flex-1 min-h-[100px]">
         {apps.map((app) => (
           <DraggableCard
             key={app.id}

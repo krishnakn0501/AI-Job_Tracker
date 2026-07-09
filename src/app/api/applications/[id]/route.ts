@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getUserId } from "@/shared/middleware/getUserId";
 import { container } from "@/infrastructure/container";
 import { Result } from "@/shared/types/Result";
+import { prisma } from "@/infrastructure/persistence/prisma/PrismaClient";
 import fs from "fs";
 import path from "path";
 
@@ -82,6 +83,28 @@ export async function PATCH(
       const error = handleResultError(result);
       if (error) {
         return Response.json({ error: error.error }, { status: error.status });
+      }
+    }
+
+    // Direct Prisma update for other mutable fields
+    const updateData: any = {};
+    if (body.followUpDate !== undefined) updateData.followUpDate = body.followUpDate ? new Date(body.followUpDate as string) : null;
+    if (body.interviewDate !== undefined) updateData.interviewDate = body.interviewDate ? new Date(body.interviewDate as string) : null;
+    if (body.followUpDone !== undefined) updateData.followUpDone = Boolean(body.followUpDone);
+    if (body.interviewDone !== undefined) updateData.interviewDone = Boolean(body.interviewDone);
+    if (body.notes !== undefined) updateData.notes = String(body.notes);
+
+    if (Object.keys(updateData).length > 0) {
+      // Ensure the application belongs to the user before updating directly
+      const existing = await prisma.application.findUnique({
+        where: { id: params.id },
+        select: { userId: true }
+      });
+      if (existing?.userId === userId) {
+        await prisma.application.update({
+          where: { id: params.id },
+          data: updateData,
+        });
       }
     }
 

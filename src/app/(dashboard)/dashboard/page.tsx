@@ -8,7 +8,6 @@ import type { Application } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import DashboardShell from "@/components/layout/DashboardShell";
 import StatsBar from "@/components/StatsBar";
 import ApplicationTable from "@/components/features/application/ApplicationTable";
 import KanbanBoard from "@/components/features/application/KanbanBoard";
@@ -63,7 +62,7 @@ function StatsSkeleton() {
 export default function DashboardPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("kanban");
 
   /* ---- Persist view mode in localStorage ---- */
   useEffect(() => {
@@ -121,23 +120,20 @@ export default function DashboardPage() {
     }
   };
 
-  /* ---- Top bar content (passed to DashboardShell) ---- */
-  const topBarContent = (
-    <>
-      <h1 className="text-base font-semibold text-slate-800">Applications</h1>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={toggleView}
-        className="h-8 text-xs"
-      >
-        {viewMode === "table" ? "⊞ Kanban" : "☰ Table"}
-      </Button>
-    </>
-  );
-
   return (
-    <DashboardShell topBarContent={topBarContent}>
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-slate-800 dark:text-white">Dashboard Overview</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleView}
+          className="h-9 px-4 rounded-xl border-slate-200 dark:border-neutral-700 bg-white/50 dark:bg-neutral-800/50 hover:bg-white dark:hover:bg-neutral-800 text-slate-700 dark:text-slate-300 font-medium shadow-sm transition-all"
+        >
+          {viewMode === "table" ? "⊞ Kanban View" : "☰ Table View"}
+        </Button>
+      </div>
+
       {loading ? (
         <>
           <StatsSkeleton />
@@ -177,6 +173,6 @@ export default function DashboardPage() {
           )}
         </>
       )}
-    </DashboardShell>
+    </div>
   );
 }

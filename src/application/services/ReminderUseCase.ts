@@ -9,8 +9,10 @@ interface ReminderDto {
   company: string;
   role: string;
   status: string;
-  followUpDate?: Date;
-  interviewDate?: Date;
+  followUpDate?: Date | null;
+  followUpDone?: boolean;
+  interviewDate?: Date | null;
+  interviewDone?: boolean;
   type: "follow_up" | "interview";
 }
 
@@ -21,7 +23,7 @@ interface ReminderDto {
 export class ReminderUseCase {
   constructor(private readonly applicationRepository: IApplicationRepository) {}
 
-  async getRemindersForUser(userId: string): Promise<Result<ReminderDto[]>> {
+  async getUncheckedRemindersForUser(userId: string): Promise<Result<ReminderDto[]>> {
     try {
       const today = new Date();
       const tomorrow = addDays(today, 1);
@@ -34,17 +36,17 @@ export class ReminderUseCase {
           const followUp = app.followUpDate;
           const interview = app.interviewDate;
 
-          const followUpDueToday =
-            followUp &&
+          const followUpActive =
+            followUp && !app.followUpDone &&
             followUp >= startOfDay(today) &&
             followUp <= endOfDay(today);
 
-          const interviewTomorrow =
-            interview &&
+          const interviewActive =
+            interview && !app.interviewDone &&
             interview >= startOfDay(tomorrow) &&
             interview <= endOfDay(tomorrow);
 
-          return followUpDueToday || interviewTomorrow;
+          return followUpActive || interviewActive;
         })
         .map((app) => ({
           id: app.id,
@@ -52,11 +54,54 @@ export class ReminderUseCase {
           role: app.role,
           status: app.status as string,
           followUpDate: app.followUpDate,
+          followUpDone: app.followUpDone,
           interviewDate: app.interviewDate,
-          type: (app.followUpDate ? "follow_up" : "interview") as
+          interviewDone: app.interviewDone,
+          type: (app.followUpDate && !app.followUpDone ? "follow_up" : "interview") as
             | "follow_up"
             | "interview",
         }));
+
+      return Result.success(reminders);
+    } catch (error) {
+      return Result.failure(error as Error);
+    }
+  }
+
+  async getAllRemindersForUser(userId: string): Promise<Result<ReminderDto[]>> {
+    try {
+      const applications = await this.applicationRepository.findByUserId(userId);
+
+      const reminders = applications
+        .filter((app) => app.followUpDate || app.interviewDate)
+        .flatMap((app) => {
+          const items: ReminderDto[] = [];
+          if (app.followUpDate) {
+            items.push({
+              id: `${app.id}-follow`,
+              applicationId: app.id,
+              company: app.company,
+              role: app.role,
+              status: app.status as string,
+              followUpDate: app.followUpDate,
+              followUpDone: app.followUpDone,
+              type: "follow_up",
+            } as any);
+          }
+          if (app.interviewDate) {
+            items.push({
+              id: `${app.id}-interview`,
+              applicationId: app.id,
+              company: app.company,
+              role: app.role,
+              status: app.status as string,
+              interviewDate: app.interviewDate,
+              interviewDone: app.interviewDone,
+              type: "interview",
+            } as any);
+          }
+          return items;
+        });
 
       return Result.success(reminders);
     } catch (error) {

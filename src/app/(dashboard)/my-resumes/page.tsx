@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
-import DashboardShell from "@/components/layout/DashboardShell";
 import FileDropzone from "@/components/features/resume/FileDropzone";
 import ResumeCard from "@/components/features/resume/ResumeCard";
 
@@ -53,14 +52,8 @@ export default function MyResumesPage() {
     toast.success(`Resume uploaded: ${result.label}`);
   };
 
-  /* ---- Top bar content ---- */
-  const topBarContent = (
-    <h1 className="text-base font-semibold text-slate-800">My Resumes</h1>
-  );
-
   return (
-    <DashboardShell topBarContent={topBarContent} hideReminderPanel>
-      <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto mt-4">
         {/* Upload section */}
         <div className="mb-8">
           <h2 className="text-sm font-semibold text-slate-700 mb-3">
@@ -102,6 +95,5 @@ export default function MyResumesPage() {
           </div>
         )}
       </div>
-    </DashboardShell>
   );
 }

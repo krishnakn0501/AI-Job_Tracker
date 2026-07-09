@@ -123,21 +123,21 @@ export default function ApplicationTable({
   return (
     <div>
       {/* Filter row */}
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-3 mb-5">
         <Input
           placeholder="Search company or role…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-xs h-8 text-sm"
+          className="max-w-xs h-10 rounded-xl bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border-slate-200 dark:border-neutral-700 shadow-sm transition-all focus:bg-white dark:focus:bg-neutral-800"
         />
         <Select
           value={statusFilter}
           onValueChange={(val) => setStatusFilter(val)}
         >
-          <SelectTrigger className="w-36 h-8 text-sm">
+          <SelectTrigger className="w-40 h-10 rounded-xl bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border-slate-200 dark:border-neutral-700 shadow-sm transition-all focus:bg-white dark:focus:bg-neutral-800">
             <SelectValue>{statusFilter === "all" ? "All statuses" : statusFilter}</SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-xl border border-slate-200 dark:border-neutral-700">
             <SelectItem value="all">All statuses</SelectItem>
             {STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
@@ -155,16 +155,16 @@ export default function ApplicationTable({
           <p className="text-xs mt-1">Try clearing your filters.</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.02)] overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-white z-10 shadow-sm">
-              <tr className="bg-slate-50 text-xs text-slate-400 font-medium uppercase tracking-wide">
-                <th className="px-4 py-2 text-left">Company / Role</th>
-                <th className="px-4 py-2 text-left">Status</th>
-                <th className="px-4 py-2 text-left">Applied</th>
-                <th className="px-4 py-2 text-left">Follow-up</th>
-                <th className="px-4 py-2 text-left">Resume</th>
-                <th className="px-4 py-2 text-left w-10"></th>
+            <thead className="sticky top-0 bg-white/60 dark:bg-black/40 backdrop-blur-md z-10 border-b border-white/40 dark:border-white/10">
+              <tr className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+                <th className="px-6 py-4 text-left">Company / Role</th>
+                <th className="px-6 py-4 text-left">Status</th>
+                <th className="px-6 py-4 text-left">Applied</th>
+                <th className="px-6 py-4 text-left">Follow-up</th>
+                <th className="px-6 py-4 text-left">Resume</th>
+                <th className="px-6 py-4 text-left w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -175,16 +175,16 @@ export default function ApplicationTable({
                 return (
                   <tr
                     key={app.id}
-                    className="hover:bg-slate-50 cursor-pointer border-b border-slate-100"
+                    className="hover:bg-white/60 dark:hover:bg-white/5 cursor-pointer border-b border-white/40 dark:border-white/10 transition-colors duration-200"
                     onClick={() => handleRowClick(app.id)}
                   >
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800 text-sm">
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
                         {app.company}
                       </p>
-                      <p className="text-xs text-slate-500">{app.role}</p>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{app.role}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       {isTerminal ? (
                         <StatusBadge status={app.status} />
                       ) : (
@@ -194,12 +194,12 @@ export default function ApplicationTable({
                             handleStatusChange(app.id, app.status, newStatus)
                           }
                         >
-                          <SelectTrigger className="w-fit h-8 text-sm">
+                          <SelectTrigger className="w-fit h-9 rounded-full bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border-slate-200 dark:border-neutral-700 shadow-sm transition-all focus:bg-white dark:focus:bg-neutral-800" onClick={(e) => e.stopPropagation()}>
                             <SelectValue>
                               <StatusBadge status={app.status} />
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="rounded-xl border border-slate-200 dark:border-neutral-700">
                             {validNextStatuses.map((status) => (
                               <SelectItem key={status} value={status}>
                                 {status}
@@ -209,23 +209,24 @@ export default function ApplicationTable({
                         </Select>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {format(new Date(app.appliedDate), "MMM d")}
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium text-xs">
+                      {format(new Date(app.appliedDate), "MMM d, yyyy")}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       {renderFollowUp(app.followUpDate)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <ResumeStatusCell
                         generationStatus={app.generationStatus}
                         resumeFinalPath={app.resumeFinalPath}
                         applicationId={app.id}
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 text-right">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        className="h-8 w-8 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/application/${app.id}`);

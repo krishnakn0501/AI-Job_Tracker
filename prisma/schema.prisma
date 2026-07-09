@@ -61,7 +61,9 @@ model Application {
   status                String    @default("Applied")
   appliedDate           DateTime  @default(now())
   followUpDate          DateTime?
+  followUpDone          Boolean   @default(false)
   interviewDate         DateTime?
+  interviewDone         Boolean   @default(false)
   generationStatus      String    @default("pending")
   resumeMarkdown        String?
   coverLetterMarkdown   String?

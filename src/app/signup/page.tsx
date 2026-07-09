@@ -120,7 +120,7 @@ export default function SignupPage() {
             <Button 
               type="submit" 
               disabled={isLoading} 
-              className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-[0.98] mt-4"
+              className="w-full h-11 rounded-xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-[0.98] mt-4"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
