@@ -28,6 +28,12 @@ export class ApplicationMapper {
       roleTitleNote: data.roleTitleNote ?? undefined,
       notes: data.notes ?? undefined,
       resumeBaseId: data.resumeBaseId ?? undefined,
+      // S10
+      reminderOverrideEnabled: data.reminderOverrideEnabled,
+      overrideReminderHour: data.overrideReminderHour ?? undefined,
+      overrideReminderAmPm: data.overrideReminderAmPm ?? undefined,
+      overrideReminderOffsetDays: data.overrideReminderOffsetDays ?? undefined,
+      overrideReminderRepeat: data.overrideReminderRepeat ?? undefined,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
     });
@@ -56,6 +62,12 @@ export class ApplicationMapper {
       roleTitleNote: entity.roleTitleNote ?? null,
       notes: entity.notes ?? null,
       resumeBaseId: entity.resumeBaseId ?? null,
+      // S10
+      reminderOverrideEnabled: entity.reminderOverrideEnabled,
+      overrideReminderHour: entity.overrideReminderHour ?? null,
+      overrideReminderAmPm: entity.overrideReminderAmPm ?? null,
+      overrideReminderOffsetDays: entity.overrideReminderOffsetDays ?? null,
+      overrideReminderRepeat: entity.overrideReminderRepeat ?? null,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

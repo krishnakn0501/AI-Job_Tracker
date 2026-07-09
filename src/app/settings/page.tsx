@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -15,11 +16,22 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
-import { Calendar, Mail, Lock, User, Globe, Phone } from "lucide-react";
+import { Calendar, Lock, User, Globe, Phone } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import { Switch } from "@/components/ui/switch";
+import {
+  summarizePreference,
+  ReminderPreference,
+} from "@/lib/reminder-engine";
+import { getPasswordPolicyError } from "@/domains/user/value-objects/Password";
+
+function defaultReminderOffset(offsetDays: number) {
+  const presets = [0, 1, 2, 3, 7];
+  return presets.includes(offsetDays) ? String(offsetDays) : "other";
+}
 
 export default function SettingsPage() {
   const [userData, setUserData] = useState({
@@ -46,6 +58,19 @@ export default function SettingsPage() {
   const [supportQueries, setSupportQueries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingReminders, setIsSavingReminders] = useState(false);
+
+  // S10 — reminder preferences
+  const [reminderHour, setReminderHour] = useState(9);
+  const [reminderAmPm, setReminderAmPm] = useState<"AM" | "PM">("AM");
+  const [reminderOffsetDays, setReminderOffsetDays] = useState(0);
+  const [reminderRepeat, setReminderRepeat] = useState(false);
+  const [offsetPreset, setOffsetPreset] = useState("0");
+  const [customOffsetDays, setCustomOffsetDays] = useState(1);
+
+  const effectiveOffsetDays =
+    offsetPreset === "other" ? customOffsetDays : Number(offsetPreset);
+
   const router = useRouter();
 
   // Fetch user data on mount
@@ -63,6 +88,15 @@ export default function SettingsPage() {
             mobile: data.mobile || "",
             email: data.email || "",
           });
+          // S10
+          setReminderHour(data.reminderHour ?? 9);
+          setReminderAmPm(data.reminderAmPm ?? "AM");
+          setReminderOffsetDays(data.reminderOffsetDays ?? 0);
+          setReminderRepeat(data.reminderRepeat ?? false);
+          setOffsetPreset(defaultReminderOffset(data.reminderOffsetDays ?? 0));
+          if (data.reminderOffsetDays && data.reminderOffsetDays > 3 && data.reminderOffsetDays !== 7) {
+            setCustomOffsetDays(data.reminderOffsetDays);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
@@ -146,8 +180,9 @@ export default function SettingsPage() {
       return;
     }
 
-    if (passwordForm.newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+    const policyError = getPasswordPolicyError(passwordForm.newPassword);
+    if (policyError) {
+      toast.error(policyError);
       return;
     }
 
@@ -227,6 +262,41 @@ export default function SettingsPage() {
     }
   };
 
+  // S10 — save reminder preferences
+  const saveReminderPreferences = async () => {
+    setIsSavingReminders(true);
+    try {
+      const res = await fetch("/api/user/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reminderHour,
+          reminderAmPm,
+          reminderOffsetDays: effectiveOffsetDays,
+          reminderRepeat,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Reminder preferences saved");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to save reminder preferences");
+      }
+    } catch (error) {
+      toast.error("Failed to save reminder preferences");
+    } finally {
+      setIsSavingReminders(false);
+    }
+  };
+
+  const handleOffsetPresetChange = (value: string) => {
+    setOffsetPreset(value);
+    if (value !== "other") {
+      setReminderOffsetDays(Number(value));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -258,6 +328,98 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* S10 — Reminders Section */}
+      <section className="bg-white rounded-lg border border-slate-200 p-6">
+        <h2 className="text-xl font-semibold text-slate-800 mb-4">Reminder preferences</h2>
+        <p className="text-slate-600 mb-4">
+          Set when you want to receive follow-up reminder emails.
+          These are your defaults — individual applications can override them.
+        </p>
+
+        {/* Time of day */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1.5">
+              Reminder time
+            </label>
+            <Select value={String(reminderHour)} onValueChange={(v) => setReminderHour(Number(v))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                  <SelectItem key={h} value={String(h)}>{h}:00</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1.5">&nbsp;</label>
+            <Select value={reminderAmPm} onValueChange={(v) => setReminderAmPm(v as "AM" | "PM")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AM">AM</SelectItem>
+                <SelectItem value="PM">PM</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Lead-time offset */}
+        <div className="mb-4">
+          <label className="text-xs font-medium text-slate-500 block mb-1.5">
+            Remind me
+          </label>
+          <Select value={offsetPreset} onValueChange={handleOffsetPresetChange}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">On the day</SelectItem>
+              <SelectItem value="1">1 day before</SelectItem>
+              <SelectItem value="2">2 days before</SelectItem>
+              <SelectItem value="3">3 days before</SelectItem>
+              <SelectItem value="7">1 week before</SelectItem>
+              <SelectItem value="other">Other…</SelectItem>
+            </SelectContent>
+          </Select>
+          {offsetPreset === "other" && (
+            <div className="flex items-center gap-2 mt-2">
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={customOffsetDays}
+                onChange={(e) => setCustomOffsetDays(Number(e.target.value))}
+                className="w-20 h-8 text-sm"
+              />
+              <span className="text-sm text-slate-500">days before</span>
+            </div>
+          )}
+        </div>
+
+        {/* Repeat toggle */}
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <p className="text-sm text-slate-700">Repeat daily</p>
+            <p className="text-xs text-slate-400">
+              Fire every day starting from the offset until the follow-up date
+            </p>
+          </div>
+          <Switch checked={reminderRepeat} onCheckedChange={setReminderRepeat} />
+        </div>
+
+        {/* Effective summary */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-5 text-xs text-blue-700">
+          {summarizePreference({
+            hour: reminderHour,
+            amPm: reminderAmPm,
+            offsetDays: effectiveOffsetDays,
+            repeat: reminderRepeat,
+          })}
+        </div>
+
+        <Button onClick={saveReminderPreferences} disabled={isSavingReminders} className="h-9 text-sm">
+          {isSavingReminders ? "Saving…" : "Save reminder preferences"}
+        </Button>
+      </section>
+
       {/* Change Password Section */}
       <section className="bg-white rounded-lg border border-slate-200 p-6">
         <h2 className="text-xl font-semibold text-slate-800 mb-4">Change Password</h2>
@@ -266,9 +428,8 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div>
             <Label htmlFor="current-password">Current Password</Label>
-            <Input
+            <PasswordInput
               id="current-password"
-              type="password"
               value={passwordForm.currentPassword}
               onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
               className="max-w-xs"
@@ -277,9 +438,8 @@ export default function SettingsPage() {
 
           <div>
             <Label htmlFor="new-password">New Password</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               value={passwordForm.newPassword}
               onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
               className="max-w-xs"
@@ -288,9 +448,8 @@ export default function SettingsPage() {
 
           <div>
             <Label htmlFor="confirm-password">Confirm New Password</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               value={passwordForm.confirmPassword}
               onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
               className="max-w-xs"
@@ -320,9 +479,8 @@ export default function SettingsPage() {
 
           <div>
             <Label htmlFor="email-current-password">Current Password</Label>
-            <Input
+            <PasswordInput
               id="email-current-password"
-              type="password"
               value={emailForm.currentPassword}
               onChange={(e) => setEmailForm({...emailForm, currentPassword: e.target.value})}
               className="max-w-xs"

@@ -31,6 +31,12 @@ interface ApplicationProps {
   roleTitleNote?: string;
   notes?: string;
   resumeBaseId?: string;
+  // S10 — per-application reminder overrides
+  reminderOverrideEnabled?: boolean;
+  overrideReminderHour?: number;
+  overrideReminderAmPm?: string;
+  overrideReminderOffsetDays?: number;
+  overrideReminderRepeat?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +57,11 @@ export class Application {
       ...props,
       id: randomUUID(),
       roleTitleChanged: props.roleTitleChanged ?? false,
+      reminderOverrideEnabled: props.reminderOverrideEnabled ?? false,
+      overrideReminderHour: props.overrideReminderHour,
+      overrideReminderAmPm: props.overrideReminderAmPm,
+      overrideReminderOffsetDays: props.overrideReminderOffsetDays,
+      overrideReminderRepeat: props.overrideReminderRepeat,
       createdAt: now,
       updatedAt: now,
     });
@@ -122,6 +133,34 @@ export class Application {
   /** Link this application to a resume base. */
   linkResume(resumeBaseId: string): void {
     this.props.resumeBaseId = resumeBaseId;
+    this.markAsUpdated();
+  }
+
+  // ===== Reminder overrides =====
+
+  /** Update per-application reminder override settings. */
+  updateReminderOverride(override: {
+    reminderOverrideEnabled?: boolean;
+    overrideReminderHour?: number | null;
+    overrideReminderAmPm?: string | null;
+    overrideReminderOffsetDays?: number | null;
+    overrideReminderRepeat?: boolean | null;
+  }): void {
+    if (override.reminderOverrideEnabled !== undefined) {
+      this.props.reminderOverrideEnabled = override.reminderOverrideEnabled;
+    }
+    if (override.overrideReminderHour !== undefined) {
+      this.props.overrideReminderHour = override.overrideReminderHour ?? undefined;
+    }
+    if (override.overrideReminderAmPm !== undefined) {
+      this.props.overrideReminderAmPm = override.overrideReminderAmPm ?? undefined;
+    }
+    if (override.overrideReminderOffsetDays !== undefined) {
+      this.props.overrideReminderOffsetDays = override.overrideReminderOffsetDays ?? undefined;
+    }
+    if (override.overrideReminderRepeat !== undefined) {
+      this.props.overrideReminderRepeat = override.overrideReminderRepeat ?? undefined;
+    }
     this.markAsUpdated();
   }
 
@@ -247,6 +286,27 @@ export class Application {
 
   get resumeBaseId(): string | undefined {
     return this.props.resumeBaseId;
+  }
+
+  // S10 — Reminder override accessors
+  get reminderOverrideEnabled(): boolean {
+    return this.props.reminderOverrideEnabled ?? false;
+  }
+
+  get overrideReminderHour(): number | undefined {
+    return this.props.overrideReminderHour;
+  }
+
+  get overrideReminderAmPm(): string | undefined {
+    return this.props.overrideReminderAmPm;
+  }
+
+  get overrideReminderOffsetDays(): number | undefined {
+    return this.props.overrideReminderOffsetDays;
+  }
+
+  get overrideReminderRepeat(): boolean | undefined {
+    return this.props.overrideReminderRepeat;
   }
 
   get createdAt(): Date {

@@ -35,26 +35,25 @@
   --ring: #0f172a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --popover: #0a0a0a;
-    --popover-foreground: #ededed;
-    --primary: #ffffff;
-    --primary-foreground: #0a0a0a;
-    --secondary: #181818;
-    --secondary-foreground: #ededed;
-    --muted: #181818;
-    --muted-foreground: #a1a1aa;
-    --accent: #181818;
-    --accent-foreground: #ededed;
-    --destructive: #7f1d1d;
-    --destructive-foreground: #ffffff;
-    --border: #262626;
-    --input: #262626;
-    --ring: #e5e5e5;
-  }
+/* Dark theme styles - this will be applied when .dark class is on html element */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --popover: #0a0a0a;
+  --popover-foreground: #ededed;
+  --primary: #ffffff;
+  --primary-foreground: #0a0a0a;
+  --secondary: #181818;
+  --secondary-foreground: #ededed;
+  --muted: #181818;
+  --muted-foreground: #a1a1aa;
+  --accent: #181818;
+  --accent-foreground: #ededed;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #ffffff;
+  --border: #262626;
+  --input: #262626;
+  --ring: #e5e5e5;
 }
 
 body {

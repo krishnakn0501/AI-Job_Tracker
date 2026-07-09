@@ -56,6 +56,11 @@ export async function PATCH(request: Request) {
       dob: body.dob,
       country: body.country,
       mobile: body.mobile,
+      // S10
+      reminderHour: body.reminderHour,
+      reminderAmPm: body.reminderAmPm,
+      reminderOffsetDays: body.reminderOffsetDays,
+      reminderRepeat: body.reminderRepeat,
     });
 
     const error = handleResultError(result);

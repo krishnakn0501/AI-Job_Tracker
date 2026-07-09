@@ -128,13 +128,14 @@ export class AuthUseCase {
     try {
       Email.create(email);
     } catch {
-      // Don't leak whether email exists
-      return Result.success({});
+      return Result.failure(new ValidationError("Invalid email format"));
     }
 
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      return Result.success({});
+      return Result.failure(
+        new ValidationError("Account does not exist. Please sign up first.")
+      );
     }
 
     const code = generateOtpCode();

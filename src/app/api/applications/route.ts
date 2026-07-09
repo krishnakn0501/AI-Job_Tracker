@@ -96,6 +96,12 @@ export async function POST(request: Request) {
         interviewDate: body.interviewDate,
         notes: body.notes,
         status: body.status,
+        // S10
+        reminderOverrideEnabled: body.reminderOverrideEnabled,
+        overrideReminderHour: body.overrideReminderHour,
+        overrideReminderAmPm: body.overrideReminderAmPm,
+        overrideReminderOffsetDays: body.overrideReminderOffsetDays,
+        overrideReminderRepeat: body.overrideReminderRepeat,
       },
       userId
     );

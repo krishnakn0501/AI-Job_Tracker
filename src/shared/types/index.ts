@@ -18,6 +18,12 @@ export type Application = {
   roleTitleChanged: boolean;
   roleTitleNote: string | null;
   notes: string | null;
+  // S10
+  reminderOverrideEnabled: boolean;
+  overrideReminderHour: number | null;
+  overrideReminderAmPm: string | null;
+  overrideReminderOffsetDays: number | null;
+  overrideReminderRepeat: boolean | null;
   createdAt: string;
   updatedAt: string;
 };

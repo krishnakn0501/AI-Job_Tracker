@@ -11,6 +11,11 @@ export interface UserDto {
   country: string;
   mobile?: string;
   pendingEmail?: string;
+  // S10
+  reminderHour: number;
+  reminderAmPm: "AM" | "PM";
+  reminderOffsetDays: number;
+  reminderRepeat: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,4 +26,9 @@ export interface UpdateUserProfileInput {
   dob?: string;
   country?: string;
   mobile?: string;
+  // S10
+  reminderHour?: number;
+  reminderAmPm?: "AM" | "PM";
+  reminderOffsetDays?: number;
+  reminderRepeat?: boolean;
 }

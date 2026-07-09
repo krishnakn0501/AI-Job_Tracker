@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import Link from "next/link";
+import { getPasswordPolicyError } from "@/domains/user/value-objects/Password";
 
 export default function ResetPasswordContent() {
   const [password, setPassword] = useState("");
@@ -28,8 +30,9 @@ export default function ResetPasswordContent() {
       return;
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+    const policyError = getPasswordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
       setIsLoading(false);
       return;
     }
@@ -98,9 +101,8 @@ export default function ResetPasswordContent() {
               <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 New Password
               </label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -112,9 +114,8 @@ export default function ResetPasswordContent() {
               <label htmlFor="confirmPassword" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Confirm New Password
               </label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required

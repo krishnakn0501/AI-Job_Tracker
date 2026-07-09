@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/shared/utils/cn";
+import { ReminderOverride, ReminderOverrideState } from "@/components/ReminderOverride";
+import type { ReminderPreference } from "@/lib/reminder-engine";
 
 function defaultFollowUpDate(): string {
   const d = new Date();
@@ -57,6 +59,21 @@ export default function AddJobForm() {
   const [resumes, setResumes] = useState<ResumeOption[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
 
+  // S10 — Reminder override state
+  const [globalPref, setGlobalPref] = useState<ReminderPreference>({
+    hour: 9,
+    amPm: "AM",
+    offsetDays: 0,
+    repeat: false,
+  });
+  const [reminderOverride, setReminderOverride] = useState<ReminderOverrideState>({
+    enabled: false,
+    hour: null,
+    amPm: null,
+    offsetDays: null,
+    repeat: null,
+  });
+
   // Fetch resumes on mount
   useEffect(() => {
     fetch("/api/resumes")
@@ -68,6 +85,23 @@ export default function AddJobForm() {
       })
       .catch(() => {
         // Silently fail — form still works, just no resume selector
+      });
+  }, []);
+
+  // Fetch global reminder preferences on mount
+  useEffect(() => {
+    fetch("/api/user/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setGlobalPref({
+          hour: data.reminderHour ?? 9,
+          amPm: data.reminderAmPm ?? "AM",
+          offsetDays: data.reminderOffsetDays ?? 0,
+          repeat: data.reminderRepeat ?? false,
+        });
+      })
+      .catch(() => {
+        // Silently fail — use defaults
       });
   }, []);
 
@@ -137,6 +171,11 @@ export default function AddJobForm() {
           followUpDate,
           notes,
           resumeBaseId: selectedResumeId,
+          reminderOverrideEnabled: reminderOverride.enabled,
+          overrideReminderHour: reminderOverride.hour,
+          overrideReminderAmPm: reminderOverride.amPm,
+          overrideReminderOffsetDays: reminderOverride.offsetDays,
+          overrideReminderRepeat: reminderOverride.repeat,
         }),
       });
       if (!res.ok) {
@@ -302,6 +341,18 @@ export default function AddJobForm() {
             onChange={(e) => setNotes(e.target.value)}
           />
         </div>
+      </div>
+
+      {/* S10 — Per-application reminder override */}
+      <div>
+        <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+          Reminder settings
+        </label>
+        <ReminderOverride
+          globalPref={globalPref}
+          override={reminderOverride}
+          onChange={(partial) => setReminderOverride((prev) => ({ ...prev, ...partial }))}
+        />
       </div>
 
       {/* Submit */}

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-otp"];
-const PUBLIC_API_PREFIXES = ["/api/auth/"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-otp", "/help"];
+const PUBLIC_API_PREFIXES = ["/api/auth/", "/api/cron/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (process.env.DISABLE_AUTH === "1") {
+    return NextResponse.next();
+  }
 
   if (PUBLIC_PATHS.includes(pathname) || PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();

@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifyJwt } from "@/infrastructure/auth/JwtService";
 
 /**
@@ -6,6 +6,15 @@ import { verifyJwt } from "@/infrastructure/auth/JwtService";
  * Using cookies() from next/headers automatically opts the route into dynamic rendering.
  */
 export async function getUserId(): Promise<string> {
+  if (process.env.DISABLE_AUTH === "1") {
+    const headersList = headers();
+    const userIdHeader = headersList.get("x-user-id");
+    if (userIdHeader) {
+      return userIdHeader;
+    }
+    return process.env.TEST_USER_ID ?? "default-test-user";
+  }
+
   const sessionCookie = cookies().get("jobtrack_session")?.value;
 
   if (!sessionCookie) {

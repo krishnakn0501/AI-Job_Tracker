@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Settings, LogOut, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReminderPanel from "@/components/ReminderPanel";
 
@@ -85,6 +85,9 @@ export default function DashboardShell({ children, topBarContent, hideReminderPa
           </NavLink>
           <NavLink href="/my-resumes" icon={FileText}>
             My Resumes
+          </NavLink>
+          <NavLink href="/help" icon={BookOpen}>
+            Help
           </NavLink>
           <NavLink href="/settings" icon={Settings}>
             Settings

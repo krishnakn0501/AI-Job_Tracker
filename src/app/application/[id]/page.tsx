@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import DashboardShell from "@/components/layout/DashboardShell";
 import StatusControl from "@/components/StatusControl";
 import ResumeViewer from "@/components/ResumeViewer";
+import { ReminderOverride, ReminderOverrideState } from "@/components/ReminderOverride";
+import type { ReminderPreference } from "@/lib/reminder-engine";
 
 export default function ApplicationDetailPage({
   params,
@@ -28,6 +30,21 @@ export default function ApplicationDetailPage({
   const [jdExpanded, setJdExpanded] = useState(false);
   const [saveIndicator, setSaveIndicator] = useState<string>("");
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+
+  // S10 — reminder override state
+  const [globalPref, setGlobalPref] = useState<ReminderPreference>({
+    hour: 9,
+    amPm: "AM",
+    offsetDays: 0,
+    repeat: false,
+  });
+  const [currentOverride, setCurrentOverride] = useState<ReminderOverrideState>({
+    enabled: false,
+    hour: null,
+    amPm: null,
+    offsetDays: null,
+    repeat: null,
+  });
 
   // Date validation states
   const [followUpDateConfirmed, setFollowUpDateConfirmed] = useState(false);
@@ -112,6 +129,15 @@ export default function ApplicationDetailPage({
       setInterviewDate(data.interviewDate || "");
       setNotes(data.notes || "");
 
+      // S10 — set reminder override state
+      setCurrentOverride({
+        enabled: data.reminderOverrideEnabled ?? false,
+        hour: data.overrideReminderHour ?? null,
+        amPm: data.overrideReminderAmPm ?? null,
+        offsetDays: data.overrideReminderOffsetDays ?? null,
+        repeat: data.overrideReminderRepeat ?? null,
+      });
+
       // Initialize warnings
       setFollowUpDateWarning(checkDatePast(data.followUpDate));
       setInterviewDateWarning(checkDatePast(data.interviewDate));
@@ -150,6 +176,23 @@ export default function ApplicationDetailPage({
   useEffect(() => {
     fetchApp();
   }, [params.id]);
+
+  // S10 — Fetch global reminder preferences
+  useEffect(() => {
+    fetch("/api/user/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setGlobalPref({
+          hour: data.reminderHour ?? 9,
+          amPm: data.reminderAmPm ?? "AM",
+          offsetDays: data.reminderOffsetDays ?? 0,
+          repeat: data.reminderRepeat ?? false,
+        });
+      })
+      .catch(() => {
+        // Silently fail — use defaults
+      });
+  }, []);
 
   useEffect(() => {
     if (app) document.title = `JobTrack — ${app.company} · ${app.role}`;
@@ -346,6 +389,26 @@ export default function ApplicationDetailPage({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* S10 — Reminder override */}
+          <div className="mb-6">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wide block mb-1.5">
+              Reminder settings
+            </label>
+            <ReminderOverride
+              globalPref={globalPref}
+              override={currentOverride}
+              onChange={async (partial) => {
+                const merged = { ...currentOverride, ...partial };
+                await fetch(`/api/applications/${app.id}/reminder-override`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(merged),
+                });
+                setCurrentOverride(merged);
+              }}
+            />
           </div>
 
           <div className="mb-6">

@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      // Always show success message for security reasons (doesn't leak email addresses)
+      // Show success message for existing users
       setMessage(
         "If that email exists in our system, a reset code has been sent."
       );
@@ -64,6 +64,16 @@ export default function ForgotPasswordPage() {
           {error && (
             <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
               {error}
+              {error.toLowerCase().includes("account") && (
+                <div className="mt-2">
+                  <Link
+                    href="/signup"
+                    className="font-medium underline hover:text-red-800"
+                  >
+                    Sign up here
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
