@@ -25,7 +25,7 @@ export default function ResetPasswordContent() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("The passwords you entered do not match. Please try again.");
       setIsLoading(false);
       return;
     }
@@ -38,7 +38,7 @@ export default function ResetPasswordContent() {
     }
 
     if (!userId) {
-      setError("Invalid request. Please restart the process.");
+      setError("This reset link is invalid or has expired. Please restart the process.");
       setIsLoading(false);
       return;
     }
@@ -52,20 +52,17 @@ export default function ResetPasswordContent() {
 
       const data = await res.json();
 
-
       if (!res.ok) {
-        setError(data.error || "Failed to reset password");
+        setError(data.error || "We couldn't reset your password. Please try again.");
         return;
       }
 
       setSuccess(true);
-
-      // Redirect to login page after 2 seconds
       setTimeout(() => {
         router.push("/login");
       }, 2000);
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Unable to connect to the server. Please check your internet connection and try again.");
       console.error(err);
     } finally {
       setIsLoading(false);

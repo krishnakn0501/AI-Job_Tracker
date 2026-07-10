@@ -12,7 +12,7 @@ export default function VerifyOtpContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(120); // 2 minutes
   const [resendDisabled, setResendDisabled] = useState(true);
-  const [resendCountdown, setResendCountdown] = useState(0);
+  const [resendCountdown, setResendCountdown] = useState(60); // 60 seconds cooldown on initial load
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,6 +42,25 @@ export default function VerifyOtpContent() {
     }
   };
 
+  // Handle paste events for OTP inputs
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").replace(/\D/g, "").slice(0, 6);
+    
+    if (!pastedData) return;
+
+    const newOtp = [...otp];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+
+    // Focus the appropriate next input
+    const focusIndex = Math.min(pastedData.length, 5);
+    const nextInput = document.getElementById(`otp-${focusIndex}`);
+    if (nextInput) nextInput.focus();
+  };
+
   // Handle OTP submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +70,7 @@ export default function VerifyOtpContent() {
     const otpString = otp.join("");
 
     if (otpString.length !== 6) {
-      setError("Please enter a 6-digit code");
+      setError("Please enter a complete 6-digit verification code.");
       setIsLoading(false);
       return;
     }
@@ -66,7 +85,7 @@ export default function VerifyOtpContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Verification failed");
+        setError(data.error || "We couldn't verify your code. Please check and try again.");
         return;
       }
 
@@ -75,7 +94,7 @@ export default function VerifyOtpContent() {
       // Redirect based on purpose
       if (purpose === "signup") {
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push("/login");
         }, 1500);
       } else if (purpose === "reset_password") {
         setTimeout(() => {
@@ -83,7 +102,7 @@ export default function VerifyOtpContent() {
         }, 1500);
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Unable to connect to the server. Please check your internet connection and try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -104,11 +123,20 @@ export default function VerifyOtpContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to resend code");
+        // If it's a cooldown error, extract the seconds and start the timer
+        const match = data.error?.match(/Please wait (\d+) seconds/i);
+        if (match) {
+          const secs = parseInt(match[1], 10);
+          setResendCountdown(secs);
+          setResendDisabled(true);
+          setError(data.error);
+        } else {
+          setError(data.error || "We were unable to resend the code. Please try again later.");
+        }
         return;
       }
 
-      setResendCountdown(30); // 30 seconds cooldown
+      setResendCountdown(60); // 60 seconds cooldown
       setResendDisabled(true);
       setCountdown(120); // Reset countdown
 
@@ -116,7 +144,7 @@ export default function VerifyOtpContent() {
       setError("Code resent successfully!");
       setTimeout(() => setError(""), 3000);
     } catch (err) {
-      setError("Failed to resend code. Please try again.");
+      setError("Unable to connect to the server. Please check your internet connection and try again.");
       console.error(err);
     }
   };
@@ -184,6 +212,7 @@ export default function VerifyOtpContent() {
                   value={digit}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={handlePaste}
                   className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white focus:bg-white dark:focus:bg-neutral-800 transition-all duration-300 shadow-sm"
                 />
               ))}
@@ -211,36 +240,19 @@ export default function VerifyOtpContent() {
           </form>
 
           <div className="mt-8 text-center">
+            <span className="text-sm text-slate-500 dark:text-slate-400 mr-2">
+              Didn't receive OTP?
+            </span>
             <Button
               onClick={handleResend}
               disabled={resendDisabled || countdown <= 0}
               variant="link"
-              className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 disabled:opacity-50"
+              className="px-0 h-auto text-sm font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 disabled:opacity-50 disabled:hover:text-slate-900 dark:disabled:hover:text-white"
             >
               {resendDisabled
                 ? `Resend in ${formatTime(resendCountdown)}`
                 : "Resend code"}
             </Button>
-          </div>
-
-          <div className="mt-4 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
-            {purpose === "signup" ? (
-              <>
-                Didn't receive an email?{" "}
-                <Link href="/signup" className="text-slate-900 dark:text-white hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-4 transition-all">
-                  Resend
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/forgot-password"
-                  className="text-slate-900 dark:text-white hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-4 transition-all"
-                >
-                  Didn't receive an email?
-                </Link>
-              </>
-            )}
           </div>
         </div>
       </div>

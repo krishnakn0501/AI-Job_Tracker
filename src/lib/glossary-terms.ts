@@ -32,6 +32,6 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
   { term: "Interview date", category: "Tracking", definition: "The date of a scheduled interview for an application. JobTrack includes applications with an interview tomorrow in reminder notifications." },
   { term: "Active applications", category: "Tracking", definition: "Applications with a status of Applied, Screening, or Interview — i.e. still in progress. Offer and Rejected applications are not counted as active." },
   { term: "Response rate", category: "Tracking", definition: "The percentage of your applications that have moved beyond 'Applied' status (i.e. received any response from the employer). Calculated as: (applications not in Applied status) / total applications × 100." },
-  { term: "file_id", category: "Technical", definition: "A unique identifier assigned by Anthropic's Files API when you upload a resume. JobTrack uses this ID to reference your resume file without re-uploading it every time Claude tailors a new application." },
+  { term: "file_id", category: "Technical", definition: "A unique identifier or URL assigned to a resume file when uploaded to Supabase S3 storage." },
   { term: "My Resumes", category: "Technical", definition: "The page where you manage all your uploaded base resumes. You can upload multiple resumes (e.g. one for engineering roles, one for product roles), set a default, and see which applications used each resume." },
 ];

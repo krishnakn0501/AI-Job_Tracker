@@ -12,6 +12,7 @@ type Resume = {
   id: string;
   label: string;
   filename: string;
+  fileId: string;
   isBase: boolean;
   createdAt: string;
   applications: Array<{ id: string; company: string; role: string; status: string }>;
@@ -97,7 +98,6 @@ export default function MyResumesPage() {
               <FileDropzone
                 onSuccess={handleUploadSuccess}
                 extraFormData={{ label }}
-                disabled={!label.trim()}
               />
             </div>
           </div>

@@ -26,11 +26,11 @@ function handleResultError<T>(
  */
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, name } = await request.json();
 
-    if (!email || !password) {
+    if (!email || !password || !name) {
       return Response.json(
-        { error: "Email and password are required" },
+        { error: "Name, email, and password are required" },
         { status: 400 }
       );
     }
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return Response.json({ error: policyError }, { status: 400 });
     }
 
-    const result = await container.authUseCase.signUp(email, password);
+    const result = await container.authUseCase.signUp(email, password, name);
     const error = handleResultError(result);
     if (error) {
       return Response.json(

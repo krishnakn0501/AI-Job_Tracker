@@ -41,25 +41,12 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unexpected error" }, { status: 500 });
     }
 
-    // For signup, set the session cookie after email verification
+    // For signup, verify the email but do NOT log them in automatically
     if (purpose === "signup") {
       const userResult = await container.userUseCase.verifyEmail(userId);
       if (Result.isFailure(userResult)) {
         return Response.json({ error: userResult.error.message }, { status: 500 });
       }
-
-      const { signJwt } = await import("@/infrastructure/auth/JwtService");
-      const jwt = await signJwt({
-        userId,
-        email: userResult.value.email,
-      });
-      cookies().set("jobtrack_session", jwt, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60,
-        path: "/",
-      });
     }
 
     return Response.json({ success: true, purpose });

@@ -39,7 +39,8 @@ export interface CreateApplicationInput {
   role: string;
   jdText?: string;
   jdUrl?: string;
-  resumeBaseId: string;
+  resumeBaseId?: string;
+  skipTailoring?: boolean;
   appliedDate?: string;
   followUpDate?: string;
   interviewDate?: string;

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import StatsBar from "@/components/StatsBar";
 import ApplicationTable from "@/components/features/application/ApplicationTable";
 import KanbanBoard from "@/components/features/application/KanbanBoard";
+import ApplicationDetailsModal from "@/components/features/application/ApplicationDetailsModal";
 
 function TableSkeleton() {
   return (
@@ -62,6 +63,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban"); // Default to kanban
   const [greeting, setGreeting] = useState("");
+  const [userName, setUserName] = useState("");
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
   /* ---- Initial Setup ---- */
   useEffect(() => {
@@ -87,14 +90,27 @@ export default function DashboardPage() {
     localStorage.setItem("jobtrack-view", mode);
   };
 
-  /* ---- Fetch applications ---- */
-  const fetchApplications = async () => {
+  /* ---- Fetch data ---- */
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/applications");
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data);
+      const [appsRes, userRes] = await Promise.all([
+        fetch("/api/applications"),
+        fetch("/api/user/settings")
+      ]);
+
+      if (appsRes.ok) {
+        const appsData = await appsRes.json();
+        setApplications(appsData);
+      }
+      
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if (userData.username) {
+          setUserName(userData.username);
+        } else if (userData.email) {
+          setUserName(userData.email.split('@')[0]);
+        }
       }
     } catch (err) {
       console.error("[Dashboard] fetch error:", err);
@@ -104,7 +120,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchApplications();
+    fetchData();
   }, []);
 
   /* ---- Optimistic status change ---- */
@@ -121,7 +137,7 @@ export default function DashboardPage() {
 
     if (!res.ok) {
       toast.error("Failed to update status");
-      fetchApplications(); // revert
+      fetchData(); // revert
     }
   };
 
@@ -131,7 +147,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            {greeting}
+            {greeting}{userName ? `, ${userName}` : ""}
             <span className="text-xl">👋</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
@@ -198,15 +214,24 @@ export default function DashboardPage() {
             <ApplicationTable
               applications={applications}
               onStatusChange={handleStatusChange}
+              onSelectApp={setSelectedAppId}
             />
           ) : (
             <KanbanBoard
               applications={applications}
               onStatusChange={handleStatusChange}
+              onSelectApp={setSelectedAppId}
             />
           )}
         </div>
       )}
+      
+      {/* Centralized Application Details Modal */}
+      <ApplicationDetailsModal
+        appId={selectedAppId}
+        onClose={() => setSelectedAppId(null)}
+        onUpdate={fetchData}
+      />
     </div>
   );
 }

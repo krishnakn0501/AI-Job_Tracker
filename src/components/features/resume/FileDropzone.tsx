@@ -81,7 +81,7 @@ export default function FileDropzone({ onSuccess, extraFormData = {}, disabled =
         <div className="h-12 w-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100 dark:border-slate-700">
           <UploadCloud className="h-6 w-6 text-indigo-500" />
         </div>
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 truncate px-4">
           {file ? file.name : "Drag your resume here"}
         </p>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -99,10 +99,10 @@ export default function FileDropzone({ onSuccess, extraFormData = {}, disabled =
       {file && !loading && (
         <Button
           onClick={handleUpload}
-          className="w-full mt-4 h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full mt-4 h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
           disabled={disabled}
         >
-          Upload {file.name}
+          <span className="truncate px-2">Upload {file.name}</span>
         </Button>
       )}
 

@@ -35,7 +35,8 @@ export class AuthUseCase {
 
   async signUp(
     email: string,
-    password: string
+    password: string,
+    name: string
   ): Promise<Result<{ userId: string; isExistingUnverified: boolean }>> {
     try {
       const emailVo = Email.create(email);
@@ -55,6 +56,7 @@ export class AuthUseCase {
         }
         const passwordHash = await hashPassword(password);
         existing.setPasswordHash(passwordHash);
+        // We could also optionally update the name for existing unverified here
         await this.userRepository.update(existing);
         userId = existing.id;
         isExistingUnverified = true;
@@ -67,6 +69,7 @@ export class AuthUseCase {
           isAdmin: false,
           theme: "light",
           country: "India",
+          username: name,
         });
 
         await this.userRepository.create(user);
@@ -99,13 +102,13 @@ export class AuthUseCase {
     try {
       Email.create(email);
     } catch {
-      return Result.failure(new UnauthorizedError("Invalid email or password"));
+      return Result.failure(new UnauthorizedError("We couldn't verify your credentials. Please check your email and password."));
     }
 
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      return Result.failure(new UnauthorizedError("Invalid email or password"));
+      return Result.failure(new UnauthorizedError("We couldn't verify your credentials. Please check your email and password."));
     }
 
     if (!user.emailVerified) {
@@ -116,7 +119,7 @@ export class AuthUseCase {
 
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
-      return Result.failure(new UnauthorizedError("Invalid email or password"));
+      return Result.failure(new UnauthorizedError("We couldn't verify your credentials. Please check your email and password."));
     }
 
     const payload = { userId: user.id, email: user.emailValue };
@@ -132,13 +135,19 @@ export class AuthUseCase {
     try {
       Email.create(email);
     } catch {
-      return Result.failure(new ValidationError("Invalid email format"));
+      return Result.failure(new ValidationError("Please provide a valid email address."));
     }
 
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       return Result.failure(
-        new ValidationError("Account does not exist. Please sign up first.")
+        new ValidationError("No account found with this email address. Please sign up to continue.")
+      );
+    }
+
+    if (!user.emailVerified) {
+      return Result.failure(
+        new ForbiddenError("Please verify your email address before attempting to reset your password.")
       );
     }
 
@@ -228,7 +237,7 @@ export class AuthUseCase {
       emailVo = Email.create(newEmail);
     } catch (error) {
       return Result.failure(
-        new ValidationError("Invalid email format", [
+        new ValidationError("Please provide a valid email address.", [
           { field: "newEmail", message: (error as Error).message },
         ])
       );
@@ -247,8 +256,8 @@ export class AuthUseCase {
     const taken = await this.userRepository.findByEmail(emailVo.value);
     if (taken) {
       return Result.failure(
-        new ValidationError("That email is already in use", [
-          { field: "newEmail", message: "Choose another email address" },
+        new ValidationError("This email address is already associated with another account.", [
+          { field: "newEmail", message: "Please choose another email address." },
         ])
       );
     }
@@ -288,20 +297,20 @@ export class AuthUseCase {
     });
 
     if (!otp) {
-      return Result.failure(new ValidationError("No active code found. Request a new one."));
+      return Result.failure(new ValidationError("We couldn't find an active verification code. Please request a new one."));
     }
     if (otp.expiresAt < new Date()) {
-      return Result.failure(new ValidationError("Code expired. Request a new one."));
+      return Result.failure(new ValidationError("This verification code has expired. Please request a new one."));
     }
     if (otp.attempts >= OTP_MAX_ATTEMPTS) {
-      return Result.failure(new ValidationError("Too many attempts. Request a new code."));
+      return Result.failure(new ValidationError("Too many invalid attempts. Please request a new verification code."));
     }
     if (otp.code !== code) {
       await prisma.otpCode.update({
         where: { id: otp.id },
         data: { attempts: { increment: 1 } },
       });
-      return Result.failure(new ValidationError("Incorrect code"));
+      return Result.failure(new ValidationError("The verification code you entered is incorrect. Please try again."));
     }
 
     await prisma.otpCode.update({
@@ -345,7 +354,7 @@ export class AuthUseCase {
       const waitMs =
         OTP_RESEND_COOLDOWN_MS - (Date.now() - lastOtp.createdAt.getTime());
       return Result.failure(
-        new ValidationError(`Please wait ${Math.ceil(waitMs / 1000)}s before resending`)
+        new ValidationError(`Please wait ${Math.ceil(waitMs / 1000)} seconds before requesting a new code.`)
       );
     }
 
@@ -353,6 +362,12 @@ export class AuthUseCase {
     if (!user) {
       return Result.failure(new UnauthorizedError("User not found"));
     }
+
+    // Invalidate all previous unconsumed OTPs for this purpose
+    await prisma.otpCode.updateMany({
+      where: { userId, purpose, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
 
     const code = generateOtpCode();
     await prisma.otpCode.create({

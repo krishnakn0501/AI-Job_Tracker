@@ -58,7 +58,7 @@ export class ApplicationUseCase {
           ? new Date(input.interviewDate)
           : undefined,
         notes: input.notes?.trim(),
-        generationStatus: "pending",
+        generationStatus: input.skipTailoring ? "skipped" : (input.resumeBaseId ? "pending" : "skipped"),
         // S10 — reminder overrides
         reminderOverrideEnabled: input.reminderOverrideEnabled,
         overrideReminderHour: input.overrideReminderHour,
@@ -94,6 +94,40 @@ export class ApplicationUseCase {
 
     try {
       application.updateStatus(newStatus);
+      await this.repository.save(application);
+      return Result.success(undefined);
+    } catch (error) {
+      return Result.failure(error as Error);
+    }
+  }
+
+  async updateDates(
+    id: string,
+    userId: string,
+    dates: {
+      followUpDate?: string | null;
+      interviewDate?: string | null;
+    }
+  ): Promise<Result<void>> {
+    const application = await this.repository.findById(id);
+
+    if (!application) {
+      return Result.failure(new NotFoundError("Application", id));
+    }
+
+    if (application.userId !== userId) {
+      return Result.failure(new Error("Forbidden"));
+    }
+
+    try {
+      const followUp = dates.followUpDate !== undefined 
+        ? (dates.followUpDate ? new Date(dates.followUpDate) : null) 
+        : undefined;
+      const interview = dates.interviewDate !== undefined 
+        ? (dates.interviewDate ? new Date(dates.interviewDate) : null) 
+        : undefined;
+
+      application.updateDates(followUp, interview);
       await this.repository.save(application);
       return Result.success(undefined);
     } catch (error) {

@@ -20,6 +20,7 @@ type Resume = {
   id: string;
   label: string;
   filename: string;
+  fileId: string;
   isBase: boolean;
   createdAt: string;
   applications: Array<{ id: string; company: string; role: string; status: string }>;
@@ -35,6 +36,8 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
   const [labelDraft, setLabelDraft] = useState(resume.label);
   const [expanded, setExpanded] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  const applications = resume.applications || [];
 
   const saveLabel = async () => {
     if (!labelDraft.trim()) {
@@ -90,8 +93,8 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
   return (
     <>
       <div className="bg-white/60 dark:bg-black/30 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl p-5 mb-4 shadow-sm hover:shadow-md transition-shadow transform-gpu">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
             {editingLabel ? (
               <Input
                 value={labelDraft}
@@ -118,7 +121,15 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
               </span>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-8 text-xs font-semibold rounded-lg bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              <a href={resume.fileId} target="_blank" rel="noopener noreferrer">Preview</a>
+            </Button>
             {!resume.isBase && (
               <Button
                 variant="outline"
@@ -139,12 +150,14 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
             </Button>
           </div>
         </div>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-4">
-          <span className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300 mr-2">{resume.filename}</span>
-          Uploaded {format(new Date(resume.createdAt), "MMM d, yyyy")}
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-4 flex items-center flex-wrap gap-2">
+          <span className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300 truncate max-w-[200px]" title={resume.filename}>
+            {resume.filename}
+          </span>
+          <span>Uploaded {format(new Date(resume.createdAt), "MMM d, yyyy")}</span>
         </p>
         
-        {resume.applications.length > 0 && (
+        {applications.length > 0 && (
           <button
             onClick={() => setExpanded(!expanded)}
             className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg transition-colors"
@@ -154,13 +167,13 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
             ) : (
               <ChevronDown className="h-3.5 w-3.5" />
             )}
-            Used in {resume.applications.length} application{resume.applications.length > 1 ? "s" : ""}
+            Used in {applications.length} application{applications.length > 1 ? "s" : ""}
           </button>
         )}
         
         {expanded && (
           <div className="mt-3 pl-2 space-y-2 relative before:absolute before:left-[3px] before:top-2 before:bottom-2 before:w-[2px] before:bg-indigo-100 dark:before:bg-indigo-500/20">
-            {resume.applications.map((app) => (
+            {applications.map((app) => (
               <Link
                 key={app.id}
                 href={`/application/${app.id}`}
@@ -182,10 +195,10 @@ export default function ResumeCard({ resume, onUpdate }: Props) {
           <DialogHeader>
             <DialogTitle>Delete this resume?</DialogTitle>
             <DialogDescription>
-              {resume.applications.length > 0 ? (
+              {applications.length > 0 ? (
                 <>
-                  This resume was used in {resume.applications.length} application
-                  {resume.applications.length > 1 ? "s" : ""}. Those applications will keep
+                  This resume was used in {applications.length} application
+                  {applications.length > 1 ? "s" : ""}. Those applications will keep
                   their generated resumes &mdash; they just won&apos;t be linked to this resume
                   anymore. This cannot be undone.
                 </>

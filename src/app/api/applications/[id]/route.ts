@@ -86,10 +86,23 @@ export async function PATCH(
       }
     }
 
-    // Direct Prisma update for other mutable fields
+    if (body.followUpDate !== undefined || body.interviewDate !== undefined) {
+      const datesResult = await container.applicationUseCase.updateDates(
+        params.id,
+        userId,
+        {
+          followUpDate: body.followUpDate as string | null | undefined,
+          interviewDate: body.interviewDate as string | null | undefined,
+        }
+      );
+      const error = handleResultError(datesResult);
+      if (error) {
+        return Response.json({ error: error.error, detail: error.detail }, { status: error.status });
+      }
+    }
+
+    // Direct Prisma update for other remaining mutable fields (notes, booleans)
     const updateData: any = {};
-    if (body.followUpDate !== undefined) updateData.followUpDate = body.followUpDate ? new Date(body.followUpDate as string) : null;
-    if (body.interviewDate !== undefined) updateData.interviewDate = body.interviewDate ? new Date(body.interviewDate as string) : null;
     if (body.followUpDone !== undefined) updateData.followUpDone = Boolean(body.followUpDone);
     if (body.interviewDone !== undefined) updateData.interviewDone = Boolean(body.interviewDone);
     if (body.notes !== undefined) updateData.notes = String(body.notes);

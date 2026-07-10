@@ -58,6 +58,7 @@ export default function AddJobForm() {
   // Resume selector state
   const [resumes, setResumes] = useState<ResumeOption[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
+  const [skipTailoring, setSkipTailoring] = useState(false);
 
   // Reminder override state
   const [globalPref, setGlobalPref] = useState<ReminderPreference>({
@@ -110,7 +111,11 @@ export default function AddJobForm() {
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate < today) {
-      setFollowUpDateWarning(true);
+      toast.error("Date cannot be before the application applied date (today).");
+      // Reset back to today or default
+      setFollowUpDate(defaultFollowUpDate());
+      setFollowUpDateWarning(false);
+      setFollowUpDateConfirmed(false);
     } else {
       setFollowUpDateWarning(false);
       setFollowUpDateConfirmed(false);
@@ -143,8 +148,8 @@ export default function AddJobForm() {
       return;
     }
 
-    if (!selectedResumeId) {
-      toast.error("Please select a resume.");
+    if (!skipTailoring && !selectedResumeId) {
+      toast.error("Please select a resume or check 'Skip resume tailoring'.");
       return;
     }
 
@@ -160,7 +165,8 @@ export default function AddJobForm() {
           jdUrl,
           followUpDate,
           notes,
-          resumeBaseId: selectedResumeId,
+          resumeBaseId: selectedResumeId || undefined,
+          skipTailoring,
           reminderOverrideEnabled: reminderOverride.enabled,
           overrideReminderHour: reminderOverride.hour,
           overrideReminderAmPm: reminderOverride.amPm,
@@ -172,7 +178,7 @@ export default function AddJobForm() {
         const err = await res.json();
         throw new Error(err.error ?? "Failed to create application");
       }
-      toast.success("Added! Resume generating — ready in ~30 seconds.");
+      toast.success(skipTailoring ? "Application added successfully." : "Added! Resume generating — ready in ~30 seconds.");
       router.push("/dashboard");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -197,7 +203,7 @@ export default function AddJobForm() {
           </div>
           
           {noResumes ? (
-            <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+            <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl mb-4">
               <p className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 No resumes uploaded yet.
@@ -220,6 +226,19 @@ export default function AddJobForm() {
               </SelectContent>
             </Select>
           )}
+
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="skipTailoring"
+              checked={skipTailoring}
+              onChange={(e) => setSkipTailoring(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-white/10 dark:bg-black/40"
+            />
+            <label htmlFor="skipTailoring" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+              Skip AI resume tailoring (just track application)
+            </label>
+          </div>
         </div>
 
         {/* Job Details Card */}
@@ -369,14 +388,16 @@ export default function AddJobForm() {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={loading || noResumes || !selectedResumeId}
+              disabled={loading || (!skipTailoring && noResumes) || (!skipTailoring && !selectedResumeId)}
               className="w-full h-14 mt-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-base shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Generating Resume…
+                  Saving…
                 </>
+              ) : skipTailoring ? (
+                "Add Application →"
               ) : (
                 "Generate Tailored Resume →"
               )}

@@ -3,12 +3,8 @@
 import { DomainError } from "./DomainError";
 
 export class ForbiddenError extends DomainError {
-  constructor(resourceType?: string) {
-    const message = resourceType
-      ? `Access forbidden to ${resourceType}`
-      : "Access forbidden";
-
-    super(message, "FORBIDDEN");
+  constructor(message?: string) {
+    super(message || "Access forbidden", "FORBIDDEN");
     this.name = "ForbiddenError";
   }
 }

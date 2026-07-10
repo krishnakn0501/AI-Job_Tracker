@@ -9,6 +9,7 @@ import Link from "next/link";
 import { getPasswordPolicyError } from "@/domains/user/value-objects/Password";
 
 export default function SignupPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,14 +23,14 @@ export default function SignupPage() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("The passwords you entered do not match. Please try again.");
       setIsLoading(false);
       return;
     }
 
     const policyError = getPasswordPolicyError(password);
     if (policyError) {
-      setError(policyError);
+      setError(policyError); // Assuming policyError is already well-formatted
       setIsLoading(false);
       return;
     }
@@ -38,20 +39,20 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Signup failed");
+        setError(data.error || "We encountered an issue creating your account. Please try again later.");
         return;
       }
 
       // Redirect to verify OTP page on successful signup
       router.push(`/verify-otp?userId=${data.userId}&purpose=signup`);
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Unable to connect to the server. Please check your internet connection and try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -80,6 +81,19 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5 group">
+              <label htmlFor="name" className="text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-slate-900 dark:group-focus-within:text-white">Name</label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="John Doe"
+                className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border-slate-200 dark:border-neutral-700 focus:bg-white dark:focus:bg-neutral-800 transition-all duration-300 h-11 rounded-xl shadow-sm"
+              />
+            </div>
+
             <div className="space-y-1.5 group">
               <label htmlFor="email" className="text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-slate-900 dark:group-focus-within:text-white">Email</label>
               <Input

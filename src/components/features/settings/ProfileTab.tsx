@@ -19,10 +19,12 @@ import "react-phone-number-input/style.css";
 import { toast } from "react-hot-toast";
 
 type UserData = {
+  theme: string;
   username: string;
   dob: Date | null;
   country: string;
   mobile: string;
+  email: string;
 };
 
 export default function ProfileTab({
