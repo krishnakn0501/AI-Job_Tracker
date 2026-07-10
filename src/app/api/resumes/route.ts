@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { getUserId } from "@/shared/middleware/getUserId";
+import { prisma } from "@/infrastructure/persistence/prisma/PrismaClient";
 import { container } from "@/infrastructure/container";
 import { Result } from "@/shared/types/Result";
 
@@ -27,14 +28,18 @@ function handleResultError<T>(
 export async function GET(request: Request) {
   try {
     const userId = await getUserId();
-    const result = await container.resumeUseCase.getAll(userId);
+    // Use Prisma directly to include applications (bypass Domain just for Read-model optimization)
+    const resumes = await prisma.resumeBase.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        applications: {
+          select: { id: true, company: true, role: true, status: true },
+        },
+      },
+    });
 
-    const error = handleResultError(result);
-    if (error) {
-      return Response.json({ error: error.error }, { status: error.status });
-    }
-
-    return Response.json(result.value);
+    return Response.json(resumes);
   } catch (error) {
     console.error("[api/resumes GET] Error:", error);
     return Response.json({ error: "Fetch failed" }, { status: 500 });

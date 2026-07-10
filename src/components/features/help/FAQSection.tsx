@@ -17,7 +17,7 @@ const FAQS: FAQ[] = [
   {
     question: "Is my data private and secure?",
     answer:
-      "Yes. Your base resumes and generated documents are stored securely. We only send your resume content and the job description to Anthropic's API for the duration of the tailoring process. We do not use your data to train our own models.",
+      "Yes. Your base resumes and generated documents are stored securely. We do not use your data to train our own models.",
   },
   {
     question: "How do the follow-up reminders work?",

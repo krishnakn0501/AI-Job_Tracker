@@ -82,6 +82,10 @@ export default function DashboardShell({ children }: Props) {
   }
 
   const handleLogout = async () => {
+    if (!window.confirm("Are you sure you want to log out?")) {
+      return;
+    }
+
     try {
       await fetch("/api/auth/logout", {
         method: "POST",

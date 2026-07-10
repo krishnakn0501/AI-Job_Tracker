@@ -19,7 +19,9 @@ interface ApplicationProps {
   status: ApplicationStatus;
   appliedDate: Date;
   followUpDate?: Date;
+  followUpDone?: boolean;
   interviewDate?: Date;
+  interviewDone?: boolean;
   generationStatus: string;
   resumeMarkdown?: string;
   coverLetterMarkdown?: string;
@@ -53,6 +55,10 @@ export class Application {
     props: Omit<ApplicationProps, "id" | "createdAt" | "updatedAt">
   ): Application {
     const now = new Date();
+    
+    // Validate that dates are not before the applied date
+    Application.validateDates(props.appliedDate, props.followUpDate, props.interviewDate);
+
     return new Application({
       ...props,
       id: randomUUID(),
@@ -62,6 +68,8 @@ export class Application {
       overrideReminderAmPm: props.overrideReminderAmPm,
       overrideReminderOffsetDays: props.overrideReminderOffsetDays,
       overrideReminderRepeat: props.overrideReminderRepeat,
+      followUpDone: props.followUpDone ?? false,
+      interviewDone: props.interviewDone ?? false,
       createdAt: now,
       updatedAt: now,
     });
@@ -171,8 +179,36 @@ export class Application {
     if (interviewDate) {
       const sevenDaysBefore = new Date(interviewDate);
       sevenDaysBefore.setDate(sevenDaysBefore.getDate() - 7);
-      this.props.followUpDate = sevenDaysBefore;
+      
+      // Ensure the scheduled follow-up is not before the applied date
+      const applied = new Date(this.props.appliedDate);
+      applied.setHours(0, 0, 0, 0);
+      
+      const scheduled = new Date(sevenDaysBefore);
+      scheduled.setHours(0, 0, 0, 0);
+      
+      if (scheduled < applied) {
+        this.props.followUpDate = this.props.appliedDate; // fallback to applied date
+      } else {
+        this.props.followUpDate = sevenDaysBefore;
+      }
     }
+  }
+
+  // ===== General update =====
+  
+  /** Update application mutable dates */
+  updateDates(followUpDate?: Date | null, interviewDate?: Date | null): void {
+    Application.validateDates(
+      this.props.appliedDate, 
+      followUpDate ?? undefined, 
+      interviewDate ?? undefined
+    );
+    
+    if (followUpDate !== undefined) this.props.followUpDate = followUpDate ?? undefined;
+    if (interviewDate !== undefined) this.props.interviewDate = interviewDate ?? undefined;
+    
+    this.markAsUpdated();
   }
 
   // ===== Generation lifecycle =====
@@ -197,6 +233,27 @@ export class Application {
   }
 
   // ===== Internal =====
+
+  private static validateDates(appliedDate: Date, followUpDate?: Date, interviewDate?: Date): void {
+    const applied = new Date(appliedDate);
+    applied.setHours(0, 0, 0, 0);
+    
+    if (followUpDate) {
+      const followUp = new Date(followUpDate);
+      followUp.setHours(0, 0, 0, 0);
+      if (followUp < applied) {
+        throw new ValidationError("Follow-up date cannot be before applied date");
+      }
+    }
+    
+    if (interviewDate) {
+      const interview = new Date(interviewDate);
+      interview.setHours(0, 0, 0, 0);
+      if (interview < applied) {
+        throw new ValidationError("Interview date cannot be before applied date");
+      }
+    }
+  }
 
   private markAsUpdated(): void {
     this.props.updatedAt = new Date();
@@ -240,8 +297,16 @@ export class Application {
     return this.props.followUpDate;
   }
 
+  get followUpDone(): boolean {
+    return this.props.followUpDone ?? false;
+  }
+
   get interviewDate(): Date | undefined {
     return this.props.interviewDate;
+  }
+
+  get interviewDone(): boolean {
+    return this.props.interviewDone ?? false;
   }
 
   get generationStatus(): string {

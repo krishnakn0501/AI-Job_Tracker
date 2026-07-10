@@ -7,7 +7,9 @@ import {
   DndContext,
   useDraggable,
   useDroppable,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import type { Application } from "@prisma/client";
 import { toast } from "react-hot-toast";
@@ -18,6 +20,7 @@ import { Clock, BriefcaseBusiness, CheckCircle2, XCircle, Users } from "lucide-r
 type Props = {
   applications: Application[];
   onStatusChange: (id: string, status: string) => void;
+  onSelectApp: (id: string) => void;
 };
 
 const STATUSES = [
@@ -47,47 +50,32 @@ const getColumnConfig = (status: string) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Draggable Card                                                     */
+/*  Card UI (Visual representation only)                              */
 /* ------------------------------------------------------------------ */
-
-function DraggableCard({
+function KanbanCard({
   app,
-  onClick,
+  isDragging,
+  isOverlay,
 }: {
   app: Application;
-  onClick: () => void;
+  isDragging?: boolean;
+  isOverlay?: boolean;
 }) {
-  const wasDragging = useRef(false);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: app.id,
-  });
-
   const isFollowUpToday = app.followUpDate && isToday(new Date(app.followUpDate));
-
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined;
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={`relative bg-white dark:bg-neutral-800 rounded-2xl border border-slate-200 dark:border-white/10 p-4 mb-3 cursor-grab hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-[box-shadow,border-color,transform] duration-200 transform-gpu ${
-        isDragging ? "z-50 scale-105 shadow-xl cursor-grabbing opacity-90 ring-2 ring-indigo-500/50" : "active:scale-[0.98]"
-      } ${isFollowUpToday ? "overflow-hidden" : ""}`}
-      {...attributes}
-      {...listeners}
-      onClick={() => {
-        if (!wasDragging.current) onClick();
-        wasDragging.current = false;
-      }}
-      onDragStart={() => {
-        wasDragging.current = true;
-      }}
+      className={`relative bg-white dark:bg-neutral-800 rounded-2xl border p-4 mb-3 cursor-grab shadow-sm transition-[box-shadow,border-color,opacity,transform] duration-200 transform-gpu ${
+        isOverlay
+          ? "z-50 scale-105 shadow-xl border-indigo-500/50 cursor-grabbing ring-2 ring-indigo-500/50 rotate-2"
+          : isDragging
+          ? "opacity-30 border-slate-200 dark:border-white/10 border-dashed"
+          : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md active:scale-[0.98]"
+      } ${isFollowUpToday && !isOverlay ? "overflow-hidden" : ""}`}
     >
       {/* Accent left border for Follow-ups */}
       {isFollowUpToday && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 rounded-l-2xl"></div>
       )}
 
       <p className="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">{app.company}</p>
@@ -104,6 +92,40 @@ function DraggableCard({
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Draggable Wrapper                                                 */
+/* ------------------------------------------------------------------ */
+
+function DraggableCard({
+  app,
+  onClick,
+}: {
+  app: Application;
+  onClick: () => void;
+}) {
+  const wasDragging = useRef(false);
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: app.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={() => {
+        if (!wasDragging.current) onClick();
+        wasDragging.current = false;
+      }}
+      onDragStart={() => {
+        wasDragging.current = true;
+      }}
+    >
+      <KanbanCard app={app} isDragging={isDragging} />
     </div>
   );
 }
@@ -164,16 +186,22 @@ function DroppableColumn({
 export default function KanbanBoard({
   applications,
   onStatusChange,
+  onSelectApp,
 }: Props) {
-  const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProps, setDialogProps] = useState<{
     fromStatus: string;
     toStatus: string;
     appId: string;
   } | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = event;
     if (!over) return;
 
@@ -209,20 +237,25 @@ export default function KanbanBoard({
     setDialogProps(null);
   };
 
+  const activeApp = activeId ? applications.find((a) => a.id === activeId) : null;
+
   return (
     <>
-      <DndContext onDragEnd={handleDragEnd}>
+      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
           {STATUSES.map((status) => (
             <div key={status} className="snap-start shrink-0">
               <DroppableColumn
                 status={status}
                 apps={applications.filter((a) => a.status === status)}
-                onCardClick={(id) => router.push(`/application/${id}`)}
+                onCardClick={(id) => onSelectApp(id)}
               />
             </div>
           ))}
         </div>
+        <DragOverlay dropAnimation={null}>
+          {activeApp ? <KanbanCard app={activeApp} isOverlay /> : null}
+        </DragOverlay>
       </DndContext>
 
       {dialogProps && (

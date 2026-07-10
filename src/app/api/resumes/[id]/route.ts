@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { getUserId } from "@/shared/middleware/getUserId";
 import { container } from "@/infrastructure/container";
-import { deleteResumeFile } from "@/infrastructure/external-api/AnthropicClient";
+import { deleteResumeFileS3 } from "@/infrastructure/external-api/S3Client";
 import { Result } from "@/shared/types/Result";
 
 function handleResultError<T>(
@@ -57,7 +57,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/resumes/[id]
- * - Delete a resume and its file from Anthropic storage.
+ * - Delete a resume and its file from Supabase S3 storage.
  * - If this was the base resume, promote the most recently created remaining one.
  */
 export async function DELETE(
@@ -77,8 +77,13 @@ export async function DELETE(
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    // Delete from Anthropic storage too
-    await deleteResumeFile(getResult.value.fileId);
+    // Delete from Supabase S3 storage
+    const fileUrl = getResult.value.fileId;
+    // fileUrl is like: https://.../object/public/resumes/userId/timestamp_filename
+    const fileKeyMatch = fileUrl.match(/\/resumes\/(.+)$/);
+    if (fileKeyMatch && fileKeyMatch[1]) {
+      await deleteResumeFileS3(fileKeyMatch[1]);
+    }
 
     const result = await container.resumeUseCase.delete(params.id, userId);
     const error = handleResultError(result);

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getUserId } from "@/shared/middleware/getUserId";
 import { uploadResumeFileS3 } from "@/infrastructure/external-api/S3Client";
 import { container } from "@/infrastructure/container";
+import { prisma } from "@/infrastructure/persistence/prisma/PrismaClient";
 import { Result } from "@/shared/types/Result";
 
 function handleResultError<T>(
@@ -39,6 +40,20 @@ export async function POST(request: Request) {
 
     const resumeLabel = label.trim() || file.name;
 
+    const existing = await prisma.resumeBase.findFirst({
+      where: {
+        userId,
+        label: resumeLabel,
+      },
+    });
+
+    if (existing) {
+      return Response.json(
+        { error: `A resume named "${resumeLabel}" already exists. Please choose a different name.` },
+        { status: 400 }
+      );
+    }
+
     const validTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -51,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    // Upload to Supabase S3 instead of Anthropic
+    // Upload to Supabase S3
     const { fileUrl, fileId } = await uploadResumeFileS3(buffer, file.name, file.type, userId);
 
     const result = await container.resumeUseCase.create(

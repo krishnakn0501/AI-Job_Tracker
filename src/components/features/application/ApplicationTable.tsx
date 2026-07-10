@@ -23,6 +23,7 @@ import { StatusChangeDialog } from "@/components/StatusChangeDialog";
 type Props = {
   applications: Application[];
   onStatusChange: (id: string, status: string) => void;
+  onSelectApp: (id: string) => void;
 };
 
 const STATUSES = [
@@ -36,6 +37,7 @@ const STATUSES = [
 export default function ApplicationTable({
   applications,
   onStatusChange,
+  onSelectApp,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -60,7 +62,7 @@ export default function ApplicationTable({
   });
 
   const handleRowClick = (id: string) => {
-    router.push(`/application/${id}`);
+    onSelectApp(id);
   };
 
   const handleStatusChange = (appId: string, fromStatus: string, toStatus: string) => {
@@ -238,7 +240,7 @@ export default function ApplicationTable({
                           className="h-8 w-8 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10"
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/application/${app.id}`);
+                            onSelectApp(app.id);
                           }}
                         >
                           <ChevronRight className="h-4 w-4" />

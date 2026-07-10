@@ -1,9 +1,13 @@
 // src/infrastructure/auth/OtpService.ts
 
-export function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import crypto from "crypto";
 
-export const OTP_EXPIRY_MS = 2 * 60 * 1000; // 2 minutes
-export const OTP_RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds
+export const OTP_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
 export const OTP_MAX_ATTEMPTS = 5;
+export const OTP_RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
+
+export function generateOtp(): string {
+  // Generate a 6-digit numeric code
+  const code = crypto.randomInt(100000, 999999);
+  return code.toString();
+}

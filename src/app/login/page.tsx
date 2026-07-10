@@ -29,15 +29,14 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        setError(data.error || "We couldn't verify your credentials. Please try again.");
         return;
       }
 
-      // Redirect to dashboard on successful login
+      // Successful login creates a session cookie, just push to dashboard
       router.push("/dashboard");
-      router.refresh();
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Unable to connect to the server. Please check your internet connection and try again.");
       console.error(err);
     } finally {
       setIsLoading(false);

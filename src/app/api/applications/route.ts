@@ -70,19 +70,17 @@ export async function POST(request: Request) {
     const userId = await getUserId();
     const body = await request.json();
 
-    // S9: require resumeBaseId — a resume must be selected
-    if (!body.resumeBaseId) {
-      return Response.json({ error: "A resume must be selected" }, { status: 400 });
+    let resume = null;
+    if (body.resumeBaseId) {
+      const resumeResult = await container.resumeUseCase.getById(
+        body.resumeBaseId,
+        userId
+      );
+      if (Result.isFailure(resumeResult)) {
+        return Response.json({ error: "Selected resume not found" }, { status: 400 });
+      }
+      resume = resumeResult.value;
     }
-
-    const resumeResult = await container.resumeUseCase.getById(
-      body.resumeBaseId,
-      userId
-    );
-    if (Result.isFailure(resumeResult)) {
-      return Response.json({ error: "Selected resume not found" }, { status: 400 });
-    }
-    const resume = resumeResult.value;
 
     const result = await container.applicationUseCase.create(
       {
@@ -91,6 +89,7 @@ export async function POST(request: Request) {
         jdText: body.jdText,
         jdUrl: body.jdUrl,
         resumeBaseId: body.resumeBaseId,
+        skipTailoring: body.skipTailoring,
         appliedDate: body.appliedDate,
         followUpDate: body.followUpDate,
         interviewDate: body.interviewDate,
@@ -118,15 +117,16 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unexpected error" }, { status: 500 });
     }
 
-    // Trigger n8n with all details including file_id and userId
-    void triggerResumeGeneration({
-      applicationId: result.value.id,
-      company: result.value.company,
-      role: result.value.role,
-      jdText: result.value.jdText ?? "",
-      fileId: resume.fileId,
-      userId,
-    }).catch((e) => console.error("n8n trigger failed:", e));
+    if (resume && !body.skipTailoring) {
+      void triggerResumeGeneration({
+        applicationId: result.value.id,
+        company: result.value.company,
+        role: result.value.role,
+        jdText: result.value.jdText ?? "",
+        fileId: resume.fileId,
+        userId,
+      }).catch((e) => console.error("n8n trigger failed:", e));
+    }
 
     return Response.json(result.value, { status: 201 });
   } catch (error) {
